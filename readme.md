@@ -253,7 +253,7 @@ Because:
 todo report error
 todo experiment limited left recursion support
 
-## Greedy literal chain
+## Big-picture greedness
 
 Let's look at two versions of a nonsense rule `a`. The first is:
 
@@ -265,11 +265,13 @@ The second is:
     a1 = \s*
     a2 = "\n"
 
-What's the difference between the two? Well, the first can parse `" \n "` but the second fails at invoking `a2` at end of the string! This is a feature, not a bug (I hope). Qualifiers on literals makes the whole literal chain greedy and may do several backtracks to approach a longest match for the whole chain. If you don't want the greedy behavior for the literal chain, you can wrap parens around elements like this:
+What's the difference between the two? Well, the first can parse `" \n "` but the second fails at invoking `a2` at end of the string! This is a feature, not a bug (I hope). Qualifiers on literals makes the whole literal chain greedy and may do several backtracks to approach a longest match for the big picture. The *big-picture greedness* is the nature of NFA-based regular expression engines and makes many patterns easier to compose while can sometimes cause unexpected performance problems (for your information, Onigmo has atomic groups `(?>)` for the fix).
+
+If you use PEG a lot, you already know the difference: the "greedness" expressed in PEG papers are usually only loyal to the atomic element before the qualifier, not the whole literal chain, it's *selfish*, not *cliquism*. If you need to defeature the *big-picture greedness*, just wrap parens around elements like this:
 
     a = (\s*) "\n" (\s*)
 
-Then it behaves the same as the second one: it never succeeds.
+Then it behaves the same as the second one --- it never succeeds.
 
 # License
 

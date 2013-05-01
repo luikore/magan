@@ -10,7 +10,6 @@ module Magan
   attr_reader :rules, :entrance
 
   def self.extended klass
-    set_entrance :main
     klass.class_eval <<-RUBY
       def initialize src
         @src = src
@@ -33,13 +32,10 @@ module Magan
     generate_grammar
   end
 
-  # set entrance rule (default is :main)
-  def set_entrance rule
-    @entrance = rule
-    @entrance_tainted = true
-  end
+  def compile entrance=:main
+    @entrance = entrance.to_s[/(?!\d)\w+/]
+    raise "invalid entrance: #{entrance.inspect}, should be a rule name" unless @entrance
 
-  def compile
     # update only changed ones
     code = ''
     @generated.each do |name, generated|
@@ -54,14 +50,8 @@ module Magan
       end
     end
 
-    if @entrance_tainted
-      code << "alias parse parse_#@entrance"
-      @entrance_tainted = false
-    end
-
-    unless code.empty?
-      class_eval code
-    end
+    code << "alias parse parse_#@entrance"
+    class_eval code
   end
 
   def helper
