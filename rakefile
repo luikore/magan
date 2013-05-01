@@ -1,0 +1,5 @@
+desc "run tests"
+task :default do
+  Dir.chdir __dir__
+  exec "rspec"
+end
