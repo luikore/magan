@@ -113,12 +113,12 @@ Look backward (`<&`) is available for expression of pure **literals**:
 
     <&("a"+)
 
-But you can not put a **reference** inside a look backward
+You can not put a **reference** inside a look backward, a compile error will be raised for the code below:
 
     hello = "hello"
     world = <&hello "world"
 
-Negative look backward (`<!`), also only literals:
+Negative look backward (`<!`), also literals only:
 
     we_are = <!\w \w+
 
@@ -130,7 +130,7 @@ We support the following qualifiers
     *
     ?
 
-Non-greedy qualifiers are literals-only (todo if i'm not lazy: make them available for references)
+Non-greedy qualifiers are also literals only (todo if i'm not lazy: make them available for references)
 
     +?
     *?
@@ -162,10 +162,12 @@ Helpers are tools for building special or complex parsers from basic grammar exp
     indent[]
     dedent[]
     samedent[]
+    atomic[]
     TODO: details and other indentation helpers
 
 You can customize your helpers too. For example, if you have a `close` helper implemented like this:
 
+```ruby
     class MyParser
       extend Magan
       grammar File.read('a_syntax.magan')
@@ -182,6 +184,7 @@ You can customize your helpers too. For example, if you have a `close` helper im
       }
       compile :main
     end
+```
 
 You can use it like this:
 
@@ -189,6 +192,7 @@ You can use it like this:
 
 Helper generated parsers are not cached by default, so you can apply dynamic non-idempotent logic here if you want. For example, to count how many times the parser is applied:
 
+```ruby
     helper[:count] = -> parser {
       parser.map do |res|
         @count ||= 0
@@ -196,6 +200,7 @@ Helper generated parsers are not cached by default, so you can apply dynamic non
         res
       end
     }
+```
 
 # Debugging and Utils
 
@@ -219,7 +224,7 @@ todo
 
 todo
 
-## Modules and dynamic parser variation interface
+## Modules and dynamic parser modification interface
 
 Change rule AST and re-generate new parsers.
 
@@ -239,19 +244,33 @@ todo add simple examples inside this guide
 
 todo
 
-## A bit backgrounds on why we need a grammar syntax
+## A bit background on why we need a grammar syntax
 
 Because:
 
-+ Even the simplest internal DSL is a bit too verbose to show what the grammar does
-+ Hard to make rules declarative
-+ Have to modify symbols to fit host grammar
-+ Can be used to generate other targets
++ Even the simplest internal DSL is a bit too verbose to show what the grammar does.
++ Internal DSL is hard to make rules declarative.
++ With internal DSL you have to modify symbols to fit host grammar.
++ Grammar definition can be used to generate targets in other languages.
 
 ## Left recursion
 
-todo report error
+todo report error at sight of left recursion
+
 todo experiment limited left recursion support
+
+## Dealing with spaces
+
+You know, with PEG you can not use a lexer to just drop out the spaces. My trick is to define `_` as `"\s"*` or `[\t\ ]*`, looks a bit cleaner.
+
+## Dealing with comments
+
+My trick is to embed comment rules inside space rules and end-of-line rules. Example for skipping C++ style comments:
+
+    eol = line_comment | $
+    _ = join[\s*, block_comment | eol]
+    line_comment = "//" .* $
+    block_comment = "/*" [.\n]*? "*/"
 
 ## Big-picture greedness
 
@@ -267,9 +286,9 @@ The second is:
 
 What's the difference between the two? Well, the first can parse `" \n "` but the second fails at invoking `a2` at end of the string! This is a feature, not a bug (I hope). Qualifiers on literals makes the whole literal chain greedy and may do several backtracks to approach a longest match for the big picture. The *big-picture greedness* is the nature of NFA-based regular expression engines and makes many patterns easier to compose while can sometimes cause unexpected performance problems (for your information, Onigmo has atomic groups `(?>)` for the fix).
 
-If you use PEG a lot, you already know the difference: the "greedness" expressed in PEG papers are usually only loyal to the atomic element before the qualifier, not the whole literal chain, it's *selfish*, not *cliquism*. If you need to defeature the *big-picture greedness*, just wrap parens around elements like this:
+If you use PEG a lot, you already know the difference: the "greedness" expressed in PEG papers are usually only loyal to the atomic element before the qualifier, not the whole literal chain, it's *selfish*, not *cliquism*. If you need to defeature the *big-picture greedness*, just use the `atomic[]` helper like this:
 
-    a = (\s*) "\n" (\s*)
+    a = atomic[\s*] "\n" atomic[\s*]
 
 Then it behaves the same as the second one --- it never succeeds.
 
