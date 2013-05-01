@@ -269,7 +269,7 @@ What's the difference between the two? Well, the first can parse `" \n "` but th
 
     a = (\s*) "\n" (\s*)
 
-Then it behaves the same as the second one: it will never succeed.
+Then it behaves the same as the second one: it never succeeds.
 
 # License
 
