@@ -169,7 +169,6 @@ You can customize your helpers too. For example, if you have a `close` helper im
     class MyParser
       extend Magan
       grammar File.read('a_syntax.magan')
-      entrance :main
       helper[:close] = -> backref_parser {
         # Note that a helper is a transformer for rules instead of results
         # if you want to transform results, use `map`
@@ -181,7 +180,7 @@ You can customize your helpers too. For example, if you have a `close` helper im
           '<' => '>'
         end
       }
-      compile
+      compile :main
     end
 
 You can use it like this:
@@ -253,6 +252,24 @@ Because:
 
 todo report error
 todo experiment limited left recursion support
+
+## Greedy literal chain
+
+Let's look at two versions of a nonsense rule `a`. The first is:
+
+    a = \s* "\n" \s*
+
+The second is:
+
+    a = a1 a2 a1
+    a1 = \s*
+    a2 = "\n"
+
+What's the difference between the two? Well, the first can parse `" \n "` but the second fails at invoking `a2` at end of the string! This is a feature, not a bug (I hope). Qualifiers on literals makes the whole literal chain greedy and may do several backtracks to approach a longest match for the whole chain. If you don't want the greedy behavior for the literal chain, you can wrap parens around elements like this:
+
+    a = (\s*) "\n" (\s*)
+
+Then it behaves the same as the second one: it will never succeed.
 
 # License
 
