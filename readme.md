@@ -253,3 +253,7 @@ Because:
 
 todo report error
 todo experiment limited left recursion support
+
+# License
+
+BSD, see copying
