@@ -25,7 +25,7 @@ module Magan
 
     BACK_REF = /\\k\<(?!\d)\w+\>/x
 
-    QUALIFIER = /[+?*][?*]?/
+    QUANTIFIER = /[+?*][?*]?/
 
     PRED_PREFIX = /<?[\&\!]/
 
@@ -38,8 +38,8 @@ module Magan
     rule      = id _ '=' _ expr _ block?
     expr      = join[seq, _ '/' _]
     seq       = join[anchor / pred / unit, _]
-    pred      = pred_prefix _ atom _ qualifier?
-    unit      = atom _ qualifier? _ var?
+    pred      = pred_prefix _ atom _ quantifier?
+    unit      = atom _ quantifier? _ var?
     atom      = paren / helper / id / string / char_class / back_ref
     paren     = '(' _ expr _ ')'
     expr_list = join[expr, _ "," _]
@@ -132,8 +132,8 @@ module Magan
           return false
         end
         skip_space
-        qualifier = maybe{ @src.scan QUALIFIER }
-        Pred[prefix, atom, qualifier]
+        quantifier = maybe{ @src.scan QUANTIFIER }
+        Pred[prefix, atom, quantifier]
       end
     end
 
@@ -141,10 +141,10 @@ module Magan
       atom = parse_atom
       return unless atom
       skip_space
-      qualifier = maybe{ @src.scan QUALIFIER }
+      quantifier = maybe{ @src.scan QUANTIFIER }
       skip_space
       var = maybe{ @src.scan VAR }
-      Unit[atom, qualifier, var]
+      Unit[atom, quantifier, var]
     end
 
     def parse_atom

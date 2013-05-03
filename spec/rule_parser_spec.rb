@@ -54,8 +54,8 @@ module Magan
       RuleParser.new(s).send("parse_#{meth}")
     end
 
-    def unit id, qualifier=nil, var=nil
-      RuleParser::Unit[RuleParser::Ref[id], qualifier, var]
+    def unit id, quantifier=nil, var=nil
+      RuleParser::Unit[RuleParser::Ref[id], quantifier, var]
     end
   end
 end

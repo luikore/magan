@@ -1,8 +1,8 @@
 module Magan
   class RuleParser
-    Unit = Struct.new :atom, :qualifier, :var
+    Unit = Struct.new :atom, :quantifier, :var
 
-    Pred = Struct.new :prefix, :atom, :qualifier
+    Pred = Struct.new :prefix, :atom, :quantifier
 
     # for anchors / char groups / strings
     Re = Struct.new :re

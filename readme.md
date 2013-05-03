@@ -4,7 +4,7 @@ Magan is compromisation between static parser generator and dynamic parser combi
 
 The grammar file shares many aspects with regular expressions, so you don't have to do much to switch mind sets when you rewrite your regexps into a parser.
 
-The compiled parser is essentially (yet another) PEG parser. Rules are effectively compiled into ruby code and *Onigmo* regular expressions, which are compiled to bytecodes and are very fast (todo benchmarks to show how fast it is). In addition to the PEG thingies, Magan provides limited look backwards, limited non-greedy qualifiers, back references, and helpers to make parser building a lot easier. Existing parsers can also be extracted and reused in a modulized way.
+The compiled parser is essentially (yet another) PEG parser. Rules are effectively compiled into ruby code and *Onigmo* regular expressions, which are compiled to bytecodes and are very fast (todo benchmarks to show how fast it is). In addition to the PEG thingies, Magan provides limited look backwards, limited non-greedy quantifiers, back references, and helpers to make parser building a lot easier. Existing parsers can also be extracted and reused in a modulized way.
 
 # Tutorial
 
@@ -70,15 +70,21 @@ The same as regexp anchors
 
 ## Capture variables
 
-Captures can be used in inside blocks.
+Capture variables can defined before a unit expression, and can be used in inside blocks.
 
 ### Last-capture variable
 
-    rule:var
+Normal captures
+
+    var:rule1 var:rule2
+
+In the above code, since two rules sharing the same capture variable, the capture of `rule2` just replaces the capture of `rule1`.
 
 ### Aggregate variable
 
-    rule::aggregate_var
+Aggregate variables are put inside an array for repeated captures. For example
+
+    (aggregate_var::rule1 rule2)*
 
 ## References
 
@@ -96,7 +102,7 @@ As you can see in the above example, rules are declarative, they are not neccesa
 
 The same syntax as the `\k` back references in Onigmo, here's an example for matching strings:
 
-    string = ['"]:open .*? \k<open>
+    string = open:['"] .*? \k<open>
 
 Note: we use the term **references** here in contrast to **literals**. A **literal** expression means it is fully composed without using any **references**. For example, `("a"+"b"+)?` is a literal but `a` is not.
 
@@ -130,21 +136,21 @@ Also literals only:
 
     we_are = <!\w \w+
 
-## Qualifiers
+## Quantifiers
 
 ### Possesive
 
-We support the following possessive qualifiers for all grammar expressions. The term "possessive" means the repeat count is fixed for self-longest-match, won't backtrack for less repeat counts.
+We support the following possessive quantifiers for all grammar expressions. The term "possessive" means the repeat count is fixed for self-longest-match, won't backtrack for less repeat counts.
 
     a+ # one or more a
     a* # zero or more a
     a? # zero or one a
 
-They are the same as "greedy" qualifiers described in PEG papers, but we prefer the term "possessive" to distinguish them from the real "greedy" ones as described below.
+They are the same as "greedy" quantifiers described in PEG papers, but we prefer the term "possessive" to distinguish them from the real "greedy" ones as described below.
 
 ### Greedy
 
-A greedy qualifier backtracks to maximize the match length for the literal chain it belongs to. The following greedy qualifiers are currently limited to be put after literals --- that is --- they can not be put after an expression containing any references.
+A greedy quantifiers backtracks to maximize the match length for the literal chain it belongs to. The following greedy quantifiers are currently limited to be put after literals --- that is --- they can not be put after an expression containing any references.
 
     'a'+* # one or more 'a', backtracks if consecutive literal pattern not match
           # it backtracks from longest to shortest
@@ -153,14 +159,14 @@ A greedy qualifier backtracks to maximize the match length for the literal chain
 
 ### Reluctant
 
-A reluctant qualifier tries to repeat as less as they can, also limited to literals.
+A reluctant quantifiers tries to repeat as less as they can, also limited to literals.
 
     'a'+? # one or more 'a', backtracks if consecutive literal pattern not match
           # it backtracks from shortest to longest
     'a'*? # zero or more 'a'
     'a'?? # zero or one 'a'
 
-todo explain more about the use of greedy / reluctant / possessiv.
+todo example for greedy / reluctant / possessive.
 
 ## Precedent branch
 
@@ -189,9 +195,11 @@ Helpers are tools for building special or complex parsers from basic grammar exp
 
 ### Ignore case
 
-The following rule parses either `'a'` or `'A'`. The only argument of `i[]` must be a literal.
+The following rule parses either `'a'` or `'A'`:
 
     i['a']
+
+The only argument of `i[]` must be a literal.
 
 ### Joiner
 
@@ -201,11 +209,11 @@ This rule is equivalent to
 
     token (joiner token)*
 
-Doesn't look a big improvement? But sometimes the first expression can be quite long, repeating it would easily lead to errors, and it's hard to think of a new name for adding a rule, then `join[]` will help you. For example,
+Doesn't look a big improvement huh? But sometimes the first expression can be quite long, repeating it would easily lead to errors, and it's hard to think of the name if you abstract the meaningless partial expression into a new rule. Then `join[]` will help you. For example, you can easily write
 
     x = join[a / b / c / d / e, ',']
 
-is easier than
+than
 
     x = a / b / c / d / e (',' (a / b / c / d / e))*
 
@@ -214,13 +222,17 @@ or
     x  = x1 (',' x1)*
     x1 = a / b / c / d / e
 
-### Permutaions
+### Permutations
 
 Assume you want to parse arbitrary non-recurring permutations of `a`, `b` and `c`, you may write a very complex rule like this:
 
     a \s+ (b \s+ c / c \s+ b) / b \s+ (a \s+ c / c \s+ a) / c \s+ (a \s+ b / b \s+ a) / a (\s+ (b / c))? / b (\s+ (a / c))? / c (\s+ (a / b))?
 
-These surely will explode if you add one more reference `d`. Or you can just use the `permutations[]` macro for the job:
+These surely will explode if you add one more reference `d`! Or you may give up and use a simpler rule and a block to reject the repeated ones?
+
+    x:(a / b / c)+ { reject if x.uniq != x; x }
+
+Or you can just use the `permutations[]` macro for the dirty job:
 
     permutations[a, b, c, \s+]
 
@@ -261,7 +273,7 @@ end
 
 You can use it like this:
 
-    expr = [\(\[\{\|\<]:x content close[\k<x>]
+    expr = x:[\(\[\{\|\<] content close[\k<x>]
 
 Helper generated parsers are not cached by default, so you can apply dynamic non-idempotent logic here if you want. For example, to count how many times the parser is applied:
 
@@ -344,6 +356,18 @@ My trick is to embed comment rules inside space rules and end-of-line rules. Exa
     _ = join[\s*, block_comment | eol]
     line_comment = "//" .* $
     block_comment = "/*" [.\n]*? "*/"
+
+## PEG can be sometimes more powerful than CFG
+
+There's already [proof](http://arxiv.org/pdf/1304.3177.pdf) that if we disambiguate LL(k) grammar in a certain way, it can be transformed into a PEG grammar.
+
+But another question is, can PEG express something that's not CFG? Sure! Remember the unlimited look forward!
+
+The example context sensitive language is `L = {a^nb^nc^n | n>0}`. It can not be described with context free grammar, thus not able to be parsed by pure CFG methods. But it can be described with our PEG:
+
+    l = &(x 'c') 'a'+ y
+    x = 'a' x* 'b'
+    y = 'b' y* 'c'
 
 # License
 
