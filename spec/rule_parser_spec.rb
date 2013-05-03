@@ -45,6 +45,11 @@ module Magan
       assert_equal [[unit('c')]], r.args[1].branches
     end
 
+    it "parses block" do
+      r = parse :block, '{hello world}'
+      assert_equal 'hello world', r
+    end
+
     def parse meth, s
       RuleParser.new(s).send("parse_#{meth}")
     end

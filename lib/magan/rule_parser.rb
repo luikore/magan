@@ -216,7 +216,15 @@ module Magan
     end
 
     def parse_block
-      
+      return unless @src.match?(/\{/)
+      s = @src.string[@src.pos..-1]
+      res = FirstBlockStripper.new(s).parse
+      if res.is_a?(String)
+        res
+      else
+        @src.pos += res
+        false
+      end
     end
 
     private

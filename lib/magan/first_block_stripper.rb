@@ -1,14 +1,7 @@
 module Magan
   class FirstBlockStripper < Ripper::SexpBuilder
-    class SyntaxError < Exception
-      def initialize pos
-        @pos = pos
-      end
-      attr_reader :pos
-    end
-
     def initialize src
-      @src = '->' + src.strip
+      @src = '->' << src
       @level = 0
       @found = false
       super @src
@@ -16,7 +9,7 @@ module Magan
 
     def parse
       super
-      raise SyntaxError.new(0) if not @found
+      return 0 if not @found
       lines = @src.lines.to_a
       line = @lineno - 1
       code = (lines[0...line] << lines[line][0...@column]).join[3...-1]
@@ -25,7 +18,7 @@ module Magan
       if stripped_code.size == code.size
         code
       else
-        raise SyntaxError.new(stripped_code.size)
+        return stripped_code.size
       end
     end
 
