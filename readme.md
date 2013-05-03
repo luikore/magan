@@ -4,7 +4,7 @@ Magan is compromisation between static parser generator and dynamic parser combi
 
 The grammar file shares many aspects with regular expressions, so you don't have to do much to switch mind sets when you rewrite your regexps into a parser.
 
-The compiled parser is essentially (yet another) PEG parser. Rules are effectively compiled into ruby code and *Onigmo* regular expressions, which are compiled to bytecodes and are very fast (todo benchmarks to show how fast it is). In addition to the PEG thingies, Magan provides limited look backwards, limited non-greedy quantifiers, back references, and helpers to make parser building a lot easier. Existing parsers can also be extracted and reused in a modulized way.
+The compiled parser is essentially mostly (yet another) PEG parser. Rules are effectively compiled into ruby code and *Onigmo* regular expressions, which are compiled to bytecodes and are very fast (todo benchmarks to show how fast it is). In addition to the PEG thingies, Magan provides local look backwards, limited non-greedy quantifiers, back references, and helpers to make parser building a lot easier. Existing parsers can also be extracted and reused in a modulized way.
 
 # Tutorial
 
@@ -369,6 +369,16 @@ The example context sensitive language is `L = {a^nb^nc^n | n>0}`. It can not be
     x = 'a' x* 'b'
     y = 'b' y* 'c'
 
+## PEG and regexp engine, which is more powerful?
+
+It's common misunderstanding that regexp engines are weaker than parser generators, in fact, regexps are weaker but regexp engines are not! A modern regexp engine (except re2, which sacricfices power for speed) has named groups and capable of parsing recursive rules, and there's [research](http://www.inf.puc-rio.br/~roberto/docs/ry10-01.pdf) that found it impossible to convert many constructs like back references into PEG. While PEG rules can be easily converted into Onigmo regexp, as Magan does.
+
+The only weakness of Onigmo is, it's hard to debug into the matching process, fixing this weakness is one goal of Magan.
+
 # License
 
 BSD, see copying
+
+# Thanks
+
+Parslet, Parsley, PEG.js and lots of people working on parser theories.
