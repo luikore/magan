@@ -13,5 +13,14 @@ module Magan
       res = FirstBlockStripper.new("{#{inside}} | a:b").parse
       assert_equal inside, res.strip
     end
+
+    it "won't strip block code when there's syntax error" do
+      assert_raise FirstBlockStripper::SyntaxError do
+        FirstBlockStripper.new("{ 3").parse
+      end
+      assert_raise FirstBlockStripper::SyntaxError do
+        FirstBlockStripper.new("{a: 3}; ->{ note }").parse
+      end
+    end
   end
 end

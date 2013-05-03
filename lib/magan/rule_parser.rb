@@ -215,6 +215,10 @@ module Magan
       Helper[id, expr_list]
     end
 
+    def parse_block
+      
+    end
+
     private
 
     def maybe

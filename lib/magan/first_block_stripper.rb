@@ -1,5 +1,12 @@
 module Magan
   class FirstBlockStripper < Ripper::SexpBuilder
+    class SyntaxError < Exception
+      def initialize pos
+        @pos = pos
+      end
+      attr_reader :pos
+    end
+
     def initialize src
       @src = '->' + src.strip
       @level = 0
@@ -9,10 +16,17 @@ module Magan
 
     def parse
       super
-      raise 'not found' if not @found
+      raise SyntaxError.new(0) if not @found
       lines = @src.lines.to_a
       line = @lineno - 1
-      (lines[0...line] << lines[line][0...@column]).join[3...-1]
+      code = (lines[0...line] << lines[line][0...@column]).join[3...-1]
+
+      stripped_code = Ripper.tokenize(code).join
+      if stripped_code.size == code.size
+        code
+      else
+        raise SyntaxError.new(stripped_code.size)
+      end
     end
 
     # token "->", order: left to right
