@@ -1,6 +1,7 @@
 require "strscan"
 require "ripper"
-require_relative "magan/rule"
+require "yaml"
+require_relative "magan/rule_parser_nodes"
 require_relative "magan/rule_parser"
 require_relative "magan/first_block_stripper"
 

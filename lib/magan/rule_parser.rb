@@ -1,95 +1,260 @@
 module Magan
-  RuleParser = Struct.new :src, :start_line
   class RuleParser
     ID = /(?!\d)\w+/
 
-    DOUBLE_S = /
+    STRING = /
       "(?>
         \\\. | # escape
         [^"]   # normal char
       )+"
+      |
+      '(?>
+        \\\\ | # backslash
+        \\'  | # single quote
+        [^']   # normal char
+      )+'
     /x
-
-    SINGLE_S = /'(?>
-      \\\\ | # backslash
-      \\'  | # single quote
-      [^']   # normal char
-    )+'/x
 
     ANCHOR = /\^|\$|\\[AzZbB]/
 
     CHAR_CLASS = /
-      (?<unicode_class> \\p\{\w+(,\w+)*\}  ){0}
-      (?<special_class> \.|\\[nwWdDhHsS]   ){0}
-      (?<group>         \[\^?(?>\g<group>|\\.|[^\]\\])+\] ){0}
-      \g<special_class> | \g<unicode_class> | \g<group>
+      \.|\\[nwWdDhHsS] |    # special
+      \\p\{\w+(?:,\w+)*\} | # property group
+      (?<group> \[\^?(?>\g<group>|\\.|[^\]\\])+\])
     /x
 
     BACK_REF = /\\k\<(?!\d)\w+\>/x
 
-    QUALIFIER = /\+\?|\*\?|[\+\*\?]/
+    QUALIFIER = /[+?*][?*]?/
 
     PRED_PREFIX = /<?[\&\!]/
 
-    SPACE = /\s*/
-
     VAR = /::?(?!\d)\w+/
 
-=begin
-    rules     = join[rule, _ "\n" _]
+    COMMENT = /\#.*$/
+
+    <<-RUBY
+    rules     = join[rule, \s* "\n" \s*]
     rule      = id _ '=' _ expr _ block?
     expr      = join[seq, _ '/' _]
-    seq       = join[anchor / pred / atom qualifier? var?, _]
-    pred      = pred_prefix _ atom
-    atom      = ('(' _ expr _ ')' / helper / id / single_s / double_s / char_class / back_ref) qualifier?
+    seq       = join[anchor / pred / unit, _]
+    pred      = pred_prefix _ atom _ qualifier?
+    unit      = atom _ qualifier? _ var?
+    atom      = paren / helper / id / string / char_class / back_ref
+    paren     = '(' _ expr _ ')'
     expr_list = join[expr, _ "," _]
     helper    = id '[' _ expr_list _ ']'
-=end
+    RUBY
+
+    def initialize src
+      @src = StringScanner.new src.strip
+    end
+    attr_reader :rules
+
     def parse
-      parse_expr
-      # Rule.new branches
+      @rules = {}
+      unless parse_rules
+        raise 'expect a rule'
+      end
+      unless @src.eos?
+        raise 'syntax error'
+      end
     end
 
-    def parse_function
-      name = @src.scan /(?!\d)\w+\[/
-      return unless name
+    def parse_rules
+      join :parse_rule do
+        @src.scan /\s*\n\s*/
+      end
+    end
 
-      name = name[0...-1]
-      args = parse_seq.tokens
-      raise "paren not closed" unless @src.scan(/\]/)
-      Function[name, args]
+    def parse_rule
+      id = @src.scan ID
+      return unless id
+      skip_space
+      return unless @src.scan(/=/)
+      skip_space
+      expr = parse_expr
+      return unless expr
+      skip_space
+      block = maybe{ parse_block }
+
+      if @rules[id]
+        raise "redefinition of rule: #{id}"
+      end
+      rule = Rule[id, expr, block]
+      rules[id] = rule
+      rule
     end
 
     def parse_expr
+      res = join :parse_seq do
+        skip_space
+        match = @src.scan /\//
+        skip_space
+        match
+      end
 
+      if res
+        Or[res]
+      else
+        false
+      end
     end
 
     def parse_seq
-      tokens
+      join :parse_seq_arg1 do
+        skip_space
+        true
+      end
     end
 
-    def parse_token
+    def parse_seq_arg1
+      anchor = @src.scan ANCHOR
+      if anchor
+        return Re[anchor]
+      end
+
       pos = @src.pos
-      @src.skip SPACE
-      predicate_prefix = @src.scan PREDICATE_PREFIX
-      @src.skip SPACE
-      if @src.eos?
-        return
+      if pred = parse_pred
+        return pred
       end
+      @src.pos = pos
 
-      token = (@src.scan(REF) or @src.scan(SINGLE_QUOTED_STRING) or @src.scan(DOUBLE_QUOTED_STRING) or @src.scan(REGEXP))
-      unless token
-        @src.pos = pos
-        raise "failed to parse token at: #{@src.pos}"
-      end
-
-      @src.skip SPACE
-      qualifier_suffix = @src.scan QUALIFIER_SUFFIX
-      Token[predicate_prefix, token, qualifier_suffix]
+      parse_unit
     end
 
-    def parse_block
+    def parse_pred
+      prefix = @src.scan PRED_PREFIX
+      if prefix
+        skip_space
+        res, atom = parse_atom
+        unless res
+          return false
+        end
+        skip_space
+        qualifier = maybe{ @src.scan QUALIFIER }
+        Pred[prefix, atom, qualifier]
+      end
+    end
 
+    def parse_unit
+      atom = parse_atom
+      return unless atom
+      skip_space
+      qualifier = maybe{ @src.scan QUALIFIER }
+      skip_space
+      var = maybe{ @src.scan VAR }
+      Unit[atom, qualifier, var]
+    end
+
+    def parse_atom
+      pos = @src.pos
+
+      if expr = parse_paren
+        return expr
+      end
+      @src.pos = pos
+
+      if helper = parse_helper
+        return helper
+      end
+      @src.pos = pos
+
+      if id = (@src.scan ID)
+        return Ref[id]
+      end
+
+      if string = (@src.scan STRING)
+        return Re[YAML.load(string)]
+      end
+
+      if char_class = (@src.scan CHAR_CLASS)
+        char_class.gsub!(/\.|\\p\{\w+(?:,\w+)+\}/){|s|
+          if s.size == 2
+            s
+          elsif s.index(',')
+            # \p{S,P} => \p{S}\p{P}
+            '[' << s.gsub(',', '}\\p{') << ']'
+          else
+            s
+          end
+        }
+        return Re[char_class]
+      end
+
+      if back_ref = (@src.scan BACK_REF)
+        return BackRef[back_ref[/(?<=\<)\w+/]]
+      end
+    end
+
+    def parse_paren
+      return unless @src.scan /\(/
+      skip_space
+      return unless expr = parse_expr
+      skip_space
+      return unless @src.scan /\)/
+      expr
+    end
+
+    def parse_expr_list
+      join :parse_expr do
+        skip_space
+        match = @src.scan /,/
+        skip_space
+        match
+      end
+    end
+
+    def parse_helper
+      id = @src.scan ID
+      return unless id
+      return unless @src.scan /\[/
+      expr_list = parse_expr_list
+      return unless expr_list
+      return unless @src.scan /\]/
+      Helper[id, expr_list]
+    end
+
+    private
+
+    def maybe
+      pos = @src.pos
+      res = yield
+      if res
+        res
+      else
+        @src.pos = pos
+        nil
+      end
+    end
+
+    # join(arg1){ arg2 }
+    def join arg1
+      res = send arg1
+      return unless res
+      arr = [res]
+
+      loop do
+        pos = @src.pos
+        unless yield
+          @src.pos = pos
+          break
+        end
+        res = send arg1
+        if res
+          arr << res
+        else
+          @src.pos = pos
+          break
+        end
+      end
+
+      arr
+    end
+
+    def skip_space
+      until @src.scan(/\s*(\#.*$\s*)*/).empty?
+      end
     end
   end
 end
