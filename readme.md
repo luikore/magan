@@ -6,6 +6,10 @@ The grammar file shares many aspects with regular expressions, so you don't have
 
 The compiled parser is essentially (yet another) PEG parser. Rules are effectively compiled into ruby code and *Onigmo* regular expressions, which are compiled to bytecodes and are very fast (todo benchmarks to show how fast it is). In addition to the PEG thingies, Magan provides limited look backwards, limited non-greedy qualifiers, back references, and helpers to make parser building a lot easier. Existing parsers can also be extracted and reused in a modulized way.
 
+# Tutorial
+
+todo
+
 # Building blocks
 
 ## Literals
@@ -100,16 +104,18 @@ Note: we use the term **references** here in contrast to **literals**. A **liter
 
 We use the PEG notations here.
 
-Look ahead (`&`)
+### Look ahead (`&`)
 
     world = "world"
     hello = "hello" &world
 
-Negative look ahead (`!`)
+### Negative look ahead (`!`)
 
     identifier = !\d \w+
 
-Look backward (`<&`) is available for expression of pure **literals**:
+### Look backward (`<&`)
+
+Only available for expression of pure **literals**:
 
     <&("a"+)
 
@@ -118,11 +124,15 @@ You can not put a **reference** inside a look backward, a compile error will be 
     hello = "hello"
     world = <&hello "world"
 
-Negative look backward (`<!`), also literals only:
+### Negative look backward (`<!`)
+
+Also literals only:
 
     we_are = <!\w \w+
 
 ## Qualifiers
+
+### Possesive
 
 We support the following possessive qualifiers for all grammar expressions. The term "possessive" means the repeat count is fixed for self-longest-match, won't backtrack for less repeat counts.
 
@@ -132,12 +142,16 @@ We support the following possessive qualifiers for all grammar expressions. The 
 
 They are the same as "greedy" qualifiers described in PEG papers, but we prefer the term "possessive" to distinguish them from the real "greedy" ones as described below.
 
+### Greedy
+
 A greedy qualifier backtracks to maximize the match length for the literal chain it belongs to. The following greedy qualifiers are currently limited to be put after literals --- that is --- they can not be put after an expression containing any references.
 
     'a'+* # one or more 'a', backtracks if consecutive literal pattern not match
           # it backtracks from longest to shortest
     'a'** # zero or more 'a'
     'a'?* # zero or one 'a'
+
+### Reluctant
 
 A reluctant qualifier tries to repeat as less as they can, also limited to literals.
 
@@ -154,6 +168,8 @@ todo explain more about the use of greedy / reluctant / possessiv.
 
 ## Block transformers
 
+Every rule allows at most one block transformer wrapped between `{` and `}`.
+
 To access environment in the block
 
     @env.line
@@ -165,37 +181,82 @@ You have the responsibility to ensure the transformers idempotent --- which mean
 
 If you need a processor that is not idempotent, custom a helper.
 
+Please don't worry about nested braces or strings inside the block, the rule compiler is smart enough to recognize very complex ruby code.
+
 ## Helpers
 
-Helpers are tools for building special or complex parsers from basic grammar expressions. Calling a helper looks like invoking a lambda. We provide several helpers to help reduce the amount of work:
+Helpers are tools for building special or complex parsers from basic grammar expressions. Calling a helper looks like invoking a lambda. We provide several helpers to help reduce the amount of work.
+
+### Ignore case
+
+The following rule parses either `'a'` or `'A'`. The only argument of `i[]` must be a literal.
 
     i['a']
+
+### Joiner
+
     join[token, joiner]
-    permutations[a, b, c, joiner]
+
+This rule is equivalent to
+
+    token (joiner token)*
+
+Doesn't look a big improvement? But sometimes the first expression can be quite long, repeating it would easily lead to errors, and it's hard to think of a new name for adding a rule, then `join[]` will help you. For example,
+
+    x = join[a / b / c / d / e, ',']
+
+is easier than
+
+    x = a / b / c / d / e (',' (a / b / c / d / e))*
+
+or
+
+    x  = x1 (',' x1)*
+    x1 = a / b / c / d / e
+
+### Permutaions
+
+Assume you want to parse arbitrary non-recurring permutations of `a`, `b` and `c`, you may write a very complex rule like this:
+
+    a \s+ (b \s+ c / c \s+ b) / b \s+ (a \s+ c / c \s+ a) / c \s+ (a \s+ b / b \s+ a) / a (\s+ (b / c))? / b (\s+ (a / c))? / c (\s+ (a / b))?
+
+These surely will explode if you add one more reference `d`. Or you can just use the `permutations[]` macro for the job:
+
+    permutations[a, b, c, \s+]
+
+It's very handy for parsing weird syntaces like Java method modifiers `synchronized public static wtf`!
+
+### Indentations
+
+Indentations are hard to fit in PEG syntax, luckily we have helpers for the job:
+
     indent[]
     dedent[]
     samedent[]
-    TODO: details and other indentation helpers
+
+TODO: explain details and other indentation helpers
+
+### Custom helpers
 
 You can customize your helpers too. For example, if you have a `close` helper implemented like this:
 
 ```ruby
-    class MyParser
-      extend Magan
-      grammar File.read('a_syntax.magan')
-      helper[:close] = -> backref_parser {
-        # Note that a helper is a transformer for rules instead of results
-        # if you want to transform results, use `map`
-        backref_parser.map do |res|
-          '(' => ')',
-          '[' => ']',
-          '{' => '}',
-          '|' => '|',
-          '<' => '>'
-        end
-      }
-      compile :main
+class MyParser
+  extend Magan
+  grammar File.read('a_syntax.magan')
+  helper[:close] = -> backref_parser {
+    # Note that a helper is a transformer for rules instead of results
+    # if you want to transform results, use `map`
+    backref_parser.map do |res|
+      '(' => ')',
+      '[' => ']',
+      '{' => '}',
+      '|' => '|',
+      '<' => '>'
     end
+  }
+  compile :main
+end
 ```
 
 You can use it like this:
@@ -205,13 +266,13 @@ You can use it like this:
 Helper generated parsers are not cached by default, so you can apply dynamic non-idempotent logic here if you want. For example, to count how many times the parser is applied:
 
 ```ruby
-    helper[:count] = -> parser {
-      parser.map do |res|
-        @count ||= 0
-        @count += 1
-        res
-      end
-    }
+helper[:count] = -> parser {
+  parser.map do |res|
+    @count ||= 0
+    @count += 1
+    res
+  end
+}
 ```
 
 # Debugging and Utils
