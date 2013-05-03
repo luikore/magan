@@ -31,9 +31,10 @@ module Magan
     end
 
     it "parses expr" do
-      r = parse :expr, 'a / b / c'
+      r = parse :expr, 'a / &"b" / c'
       assert_equal 3, r.branches.size
-      assert_equal 'c', r.branches.last.first.atom.id
+      assert_equal RuleParser::Pred['&', RuleParser::Re['b'], nil], r.branches[1].first
+      assert_equal unit('c'), r.branches[2].first
     end
 
     it "parses helper" do

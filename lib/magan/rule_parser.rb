@@ -127,8 +127,8 @@ module Magan
       prefix = @src.scan PRED_PREFIX
       if prefix
         skip_space
-        res, atom = parse_atom
-        unless res
+        atom = parse_atom
+        unless atom
           return false
         end
         skip_space
