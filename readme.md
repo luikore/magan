@@ -124,16 +124,29 @@ Negative look backward (`<!`), also literals only:
 
 ## Qualifiers
 
-We support the following qualifiers
+We support the following possessive qualifiers for all grammar expressions. The term "possessive" means the repeat count is fixed for self-longest-match, won't backtrack for less repeat counts.
 
-    +
-    *
-    ?
+    a+ # one or more a
+    a* # zero or more a
+    a? # zero or one a
 
-Non-greedy qualifiers are also literals only (todo if i'm not lazy: make them available for references)
+They are the same as "greedy" qualifiers described in PEG papers, but we prefer the term "possessive" to distinguish them from the real "greedy" ones as described below.
 
-    +?
-    *?
+A greedy qualifier backtracks to maximize the match length for the literal chain it belongs to. The following greedy qualifiers are currently limited to be put after literals --- that is --- they can not be put after an expression containing any references.
+
+    'a'+* # one or more 'a', backtracks if consecutive literal pattern not match
+          # it backtracks from longest to shortest
+    'a'** # zero or more 'a'
+    'a'?* # zero or one 'a'
+
+A reluctant qualifier tries to repeat as less as they can, also limited to literals.
+
+    'a'+? # one or more 'a', backtracks if consecutive literal pattern not match
+          # it backtracks from shortest to longest
+    'a'*? # zero or more 'a'
+    'a'?? # zero or one 'a'
+
+todo explain more about the use of greedy / reluctant / possessiv.
 
 ## Precedent branch
 
@@ -148,7 +161,7 @@ To access environment in the block
     @env.filename
     TODO: other env information
 
-You have the responsibility to ensure they are idempotent --- which means for a certain position in the source code, the processor should return the same result no matter how many times it is called, and the side effects should not accumulate.
+You have the responsibility to ensure the transformers idempotent --- which means for a certain position in the source code, the processor should return the same result no matter how many times it is called, and the side effects should not accumulate.
 
 If you need a processor that is not idempotent, custom a helper.
 
@@ -162,7 +175,6 @@ Helpers are tools for building special or complex parsers from basic grammar exp
     indent[]
     dedent[]
     samedent[]
-    atomic[]
     TODO: details and other indentation helpers
 
 You can customize your helpers too. For example, if you have a `close` helper implemented like this:
@@ -271,26 +283,6 @@ My trick is to embed comment rules inside space rules and end-of-line rules. Exa
     _ = join[\s*, block_comment | eol]
     line_comment = "//" .* $
     block_comment = "/*" [.\n]*? "*/"
-
-## Big-picture greedness
-
-Let's look at two versions of a nonsense rule `a`. The first is:
-
-    a = \s* "\n" \s*
-
-The second is:
-
-    a = a1 a2 a1
-    a1 = \s*
-    a2 = "\n"
-
-What's the difference between the two? Well, the first can parse `" \n "` but the second fails at invoking `a2` at end of the string! This is a feature, not a bug (I hope). Qualifiers on literals makes the whole literal chain greedy and may do several backtracks to approach a longest match for the big picture. The *big-picture greedness* is the nature of NFA-based regular expression engines and makes many patterns easier to compose while can sometimes cause unexpected performance problems (for your information, Onigmo has atomic groups `(?>)` for the fix).
-
-If you use PEG a lot, you already know the difference: the "greedness" expressed in PEG papers are usually only loyal to the atomic element before the qualifier, not the whole literal chain, it's *selfish*, not *cliquism*. If you need to defeature the *big-picture greedness*, just use the `atomic[]` helper like this:
-
-    a = atomic[\s*] "\n" atomic[\s*]
-
-Then it behaves the same as the second one --- it never succeeds.
 
 # License
 
