@@ -29,7 +29,7 @@ module Magan
 
     PRED_PREFIX = /<?[\&\!]/
 
-    VAR = /::?(?!\d)\w+/
+    VAR = /(?!\d)\w+::?/
 
     COMMENT = /\#.*$/
 
@@ -39,7 +39,7 @@ module Magan
     expr      = join[seq, _ '/' _]
     seq       = join[anchor / pred / unit, _]
     pred      = pred_prefix _ atom _ quantifier?
-    unit      = atom _ quantifier? _ var?
+    unit      = var? _ atom _ quantifier?
     atom      = paren / helper / id / string / char_class / back_ref
     paren     = '(' _ expr _ ')'
     expr_list = join[expr, _ "," _]
@@ -138,13 +138,13 @@ module Magan
     end
 
     def parse_unit
+      var = maybe{ @src.scan VAR }
+      skip_space
       atom = parse_atom
       return unless atom
       skip_space
       quantifier = maybe{ @src.scan QUANTIFIER }
-      skip_space
-      var = maybe{ @src.scan VAR }
-      Unit[atom, quantifier, var]
+      Unit[var, atom, quantifier]
     end
 
     def parse_atom

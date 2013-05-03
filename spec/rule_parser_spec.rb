@@ -23,26 +23,26 @@ module Magan
     end
 
     it "parses seq" do
-      r = parse :seq, 'a b+:x $ \k<x>'
-      assert_equal unit('a'), r[0]
-      assert_equal unit('b', '+', ':x'), r[1]
+      r = parse :seq, 'a x:b+ $ \k<x>'
+      assert_equal unit(nil, 'a'), r[0]
+      assert_equal unit('x:', 'b', '+'), r[1]
       assert_equal RuleParser::Re['$'], r[2]
-      assert_equal RuleParser::Unit[RuleParser::BackRef['x']], r[3]
+      assert_equal RuleParser::Unit[nil, RuleParser::BackRef['x']], r[3]
     end
 
     it "parses expr" do
       r = parse :expr, 'a / &"b" / c'
       assert_equal 3, r.branches.size
       assert_equal RuleParser::Pred['&', RuleParser::Re['b'], nil], r.branches[1].first
-      assert_equal unit('c'), r.branches[2].first
+      assert_equal unit(nil, 'c'), r.branches[2].first
     end
 
     it "parses helper" do
       r = parse :helper, 'a[b, c]'
       assert_equal 'a', r.helper
       assert_equal 2, r.args.size
-      assert_equal [[unit('b')]], r.args[0].branches
-      assert_equal [[unit('c')]], r.args[1].branches
+      assert_equal [[unit(nil, 'b')]], r.args[0].branches
+      assert_equal [[unit(nil, 'c')]], r.args[1].branches
     end
 
     it "parses block" do
@@ -54,8 +54,8 @@ module Magan
       RuleParser.new(s).send("parse_#{meth}")
     end
 
-    def unit id, quantifier=nil, var=nil
-      RuleParser::Unit[RuleParser::Ref[id], quantifier, var]
+    def unit var, id, quantifier=nil
+      RuleParser::Unit[var, RuleParser::Ref[id], quantifier]
     end
   end
 end

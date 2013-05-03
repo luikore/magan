@@ -1,6 +1,6 @@
 module Magan
   class RuleParser
-    Unit = Struct.new :atom, :quantifier, :var
+    Unit = Struct.new :var, :atom, :quantifier
 
     Pred = Struct.new :prefix, :atom, :quantifier
 
