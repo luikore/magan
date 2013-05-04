@@ -70,7 +70,7 @@ The same as regexp anchors
 
 ## Capture variables
 
-Capture variables can defined before a unit expression, and can be used in inside blocks.
+Capture variables are defined before a unit expression, and are used in blocks or back references.
 
 ### Last-capture variable
 
@@ -90,21 +90,21 @@ Aggregate variables are put inside an array for repeated captures. For example
 
 ### Reference to rule
 
-Our recursive parser is not complete without references. Here's a nonsense example that the rule `hello_world` references the rules `hello` and `world`:
+Here's a nonsense example that the rule `hello_world` invokes the rules `hello` and `world`:
 
     hello_world = hello ' ' world
     hello = "hello"
     world = "world"
 
-As you can see in the above example, rules are declarative, they are not neccesary to be decalared before used as references.
+As you can see in the example, rules are declarative, not neccesary to be decalared before used.
 
-### Reference to variable (A.K.A back reference)
+### Reference to variable (`\k`, A.K.A back reference)
 
-The same syntax as the `\k` back references in Onigmo, here's an example for matching strings:
+The syntax is much like back references in Onigmo, here's an example for matching quoted strings:
 
     string = open:['"] .*? \k<open>
 
-Note: we use the term **references** here in contrast to **literals**. A **literal** expression means it is fully composed without using any **references**. For example, `("a"+"b"+)?` is a literal but `a` is not.
+Note: we use the term **reference** here in contrast to **literal**. A **literal** expression means it is fully composed without using any **reference**. For example, `("a"+"b"+)?` is a literal but `a` is not.
 
 ## Look around anchors
 
@@ -187,11 +187,11 @@ You have the responsibility to ensure the transformers idempotent --- which mean
 
 If you need a processor that is not idempotent, custom a helper.
 
-Please don't worry about nested braces or strings inside the block, the rule compiler is smart enough to recognize very complex ruby code.
+By the way, please don't worry about nested braces or strings inside the block, the rule compiler is smart enough to recognize very complex ruby code.
 
 ## Helpers
 
-Helpers are tools for building special or complex parsers from basic grammar expressions. Calling a helper looks like invoking a lambda. We provide several helpers to help reduce the amount of work.
+Helpers are tools for building special or complex parsers from basic grammar expressions. Calling a helper looks like invoking a lambda in Ruby. We provide several helpers to help reduce the amount of work.
 
 ### Ignore case
 

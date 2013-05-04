@@ -87,22 +87,16 @@ module Magan
     end
 
     def parse_expr
-      res = join :parse_seq do
+      join :parse_seq, Or.new do
         skip_space
         match = @src.scan /\//
         skip_space
         match
       end
-
-      if res
-        Or[res]
-      else
-        false
-      end
     end
 
     def parse_seq
-      join :parse_seq_arg1 do
+      join :parse_seq_arg1, Seq.new do
         skip_space
         true
       end
@@ -220,6 +214,7 @@ module Magan
       s = @src.string[@src.pos..-1]
       res = FirstBlockStripper.new(s).parse
       if res.is_a?(String)
+        @src.pos += res.size + 2
         res
       else
         @src.pos += res
@@ -240,11 +235,11 @@ module Magan
       end
     end
 
-    # join(arg1){ arg2 }
-    def join arg1
+    # join(arg1, arr){ arg2 }
+    def join arg1, arr=[]
       res = send arg1
       return unless res
-      arr = [res]
+      arr << res
 
       loop do
         pos = @src.pos
