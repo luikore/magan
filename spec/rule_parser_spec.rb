@@ -33,16 +33,16 @@ module Magan
     it "parses expr" do
       r = parse :expr, 'a / &"b" / c'
       assert_equal 3, r.size
-      assert_equal RuleParser::Pred['&', RuleParser::Re['b'], nil], r[1].first
-      assert_equal unit(nil, 'c'), r[2].first
+      assert_equal RuleParser::Pred['&', RuleParser::Re['b'], nil], r[1]
+      assert_equal unit(nil, 'c'), r[2]
     end
 
     it "parses helper" do
       r = parse :helper, 'a[b, c]'
       assert_equal 'a', r.helper
       assert_equal 2, r.args.size
-      assert_equal RuleParser::Or[RuleParser::Seq[unit(nil, 'b')]], r.args[0]
-      assert_equal RuleParser::Or[RuleParser::Seq[unit(nil, 'c')]], r.args[1]
+      assert_equal unit(nil, 'b'), r.args[0]
+      assert_equal unit(nil, 'c'), r.args[1]
     end
 
     it "parses block" do

@@ -1,5 +1,7 @@
 module Magan
   class RuleParser
+    include Nodes
+
     ID = /(?!\d)\w+/
 
     STRING = /
@@ -47,18 +49,19 @@ module Magan
     RUBY
 
     def initialize src
-      @src = StringScanner.new src.strip
+      @src = ZScan.new src.strip
     end
     attr_reader :rules
 
     def parse
       @rules = {}
       unless parse_rules
-        raise 'expect a rule'
+        raise SyntaxError, "expect a rule at #{@src.pos}"
       end
       unless @src.eos?
-        raise 'syntax error'
+        raise SyntaxError, "syntax error at #{@src.pos}"
       end
+      @rules
     end
 
     def parse_rules
@@ -87,18 +90,30 @@ module Magan
     end
 
     def parse_expr
-      join :parse_seq, Or.new do
+      r = Or.new
+      join :parse_seq, r do
         skip_space
         match = @src.scan /\//
         skip_space
         match
       end
+      if r.size == 1
+        r.first
+      else
+        r
+      end
     end
 
     def parse_seq
-      join :parse_seq_arg1, Seq.new do
+      r = Seq.new
+      join :parse_seq_arg1, r do
         skip_space
         true
+      end
+      if r.size == 1
+        r.first
+      else
+        r
       end
     end
 
@@ -126,8 +141,17 @@ module Magan
           return false
         end
         skip_space
-        quantifier = maybe{ @src.scan QUANTIFIER }
-        Pred[prefix, atom, quantifier]
+        case (quantifier = maybe{ @src.scan QUANTIFIER })
+        when /^[\?\*]/
+          case prefix
+          when '&', '<&'
+            Success[] # always match
+          else
+            Fail[] # always not match
+          end
+        else
+          Pred[prefix, atom, quantifier]
+        end
       end
     end
 
@@ -167,7 +191,7 @@ module Magan
           if s.size == 2
             s
           elsif s.index(',')
-            # \p{S,P} => \p{S}\p{P}
+            # \p{S,P} => [\p{S}\p{P}]
             '[' << s.gsub(',', '}\\p{') << ']'
           else
             s
@@ -210,7 +234,7 @@ module Magan
     end
 
     def parse_block
-      return unless @src.match?(/\{/)
+      return unless @src.bmatch?(/\{/)
       s = @src.string[@src.pos..-1]
       res = FirstBlockStripper.new(s).parse
       if res.is_a?(String)
