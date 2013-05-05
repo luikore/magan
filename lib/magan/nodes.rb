@@ -100,7 +100,7 @@ module Magan
           end
 
           if wrap
-            r = "#{indent}lambda{|;r_, e_, pos_|\n"
+            r = "#{indent}lambda{|;r_, e_|\n"
             inner_indent = indent + '  '
           else
             r = ''
@@ -109,10 +109,10 @@ module Magan
 
           case quantifier
           when '?'
-            r << "#{inner_indent}pos_ = @src.pos
+            r << "#{inner_indent}@src.push_pos
 #{inner_indent}r_ =
 #{atom.generate inner_indent + '  '}
-#{inner_indent}if r_ then #{assign}[r_] else @src.pos = pos_; [] end"
+#{inner_indent}if r_ then #{assign}; @src.drop_top; [r_] else @src.pop_pos; [] end"
 
           when '*', '+'
             case quantifier
@@ -127,17 +127,17 @@ module Magan
             end
             r << "#{inner_indent}#{assign}
 #{inner_indent}loop do
-#{inner_indent}  pos_ = @src.pos
+#{inner_indent}  @src.push_pos
 #{inner_indent}  e_ =
 #{atom.generate inner_indent + '    '}
-#{inner_indent}  if e_ then r_ << e_ else @src.pos = pos_; break; end
+#{inner_indent}  if e_ then @src.drop_top; r_ << e_ else @src.pop_pos; break; end
 #{inner_indent}end
 #{inner_indent}r_
 "
           else
             r << "#{inner_indent}r_ =
 #{atom.generate inner_indent + '  '}
-if r_ then #{assign}; r_; end
+#{inner_indent}if r_ then #{assign}; r_; end
 "
           end
 
@@ -168,7 +168,7 @@ if r_ then #{assign}; r_; end
           return "#{indent}(@src.scan(/#{to_re}/) ? [] : nil)" if literal?
 
           if wrap
-            r = "#{indent}lambda{|;r_, e_, pos_|\n"
+            r = "#{indent}lambda{|;r_, e_|\n"
             inner_indent = indent + '  '
           else
             r = ''
@@ -251,19 +251,23 @@ if r_ then #{assign}; r_; end
           return "#{indent}@src.scan(/#{to_re}/)" if literal?
 
           if wrap
-            r = "#{indent}lambda {|;pos_, r_|\n"
+            r = "#{indent}lambda {|;r_|\n"
             inner_indent = indent + '  '
           else
             r = ''
             inner_indent = indent
           end
 
-          r << "#{inner_indent}pos_ = @src.pos\n"
+          r << "#{inner_indent}@src.push_pos\n"
           *es, last = self
           code = "#{inner_indent}r_ =
 %s
-#{inner_indent}return r_ if r_
-#{inner_indent}@src.pos = pos_
+#{inner_indent}if r_
+#{inner_indent}  @src.drop_top
+#{inner_indent}  return r_
+#{inner_indent}else
+#{inner_indent}  @src.pop_pos
+#{inner_indent}end
 "
           e_indent = inner_indent + '  '
           es.each {|e|
@@ -308,7 +312,7 @@ if r_ then #{assign}; r_; end
             inner_indent = indent
           end
 
-          r << inner_indent << "r_ = []\n"
+          r << inner_indent << "r_ = Array.new #{size}\n"
           code = "#{inner_indent}e_ =
 %s
 #{inner_indent}return unless e_
