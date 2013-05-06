@@ -1,5 +1,5 @@
 module Magan
-  module Nodes
+  module RuleNodes
     Unit = S.new :var, :atom, :quantifier
     class Unit
       def literal?

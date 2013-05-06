@@ -375,15 +375,40 @@ It's common misunderstanding that regexp engines are weaker than parser generato
 
 The only weakness of Onigmo is, it's hard to debug into the matching process, fixing this weakness is one goal of Magan.
 
+## AST format
+
+The result AST is array of arbitry levels, the leaf elements are purely strings. You may use `Array#join` to restore the text.
+
+## Pakrat parsing
+
+The parser supports caching, you can choose totally caching or only cache the results larger than a certain length. The caching based on length is has benefits of memory and time.
+
 ## Inline grammar caveats
 
-You have to double backslashes. For example:
+You have to double backslashes if using double quotes. For example:
 
 ```ruby
 class ExampleGrammar
   extend Magan
   grammar "nbsp = [\\ \\t]*"
   compile :nbsp
+end
+```
+
+The single quote form `%q|...|` plays best with our grammar:
+
+```ruby
+class ArithmeticGrammar
+  extend Magan
+  grammar %q|
+    expr = _ add _
+    int  = '-'? \d+
+    atom = '(' _ expr _ ')' / int
+    mul  = atom (_ [*/] _ atom)*
+    add  = mul (_ [+-] _ mul)*
+    _    = [\ \t]*
+  |
+  compile :expr
 end
 ```
 

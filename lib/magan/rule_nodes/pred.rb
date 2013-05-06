@@ -1,5 +1,5 @@
 module Magan
-  module Nodes
+  module RuleNodes
     Pred = S.new :prefix, :atom, :quantifier
     class Pred
       def literal?

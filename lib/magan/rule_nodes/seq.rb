@@ -1,6 +1,6 @@
 module Magan
-  module Nodes
-    class Or < ::Array
+  module RuleNodes
+    class Seq < ::Array
       def self.[] *xs
         r = new
         xs.each do |x|
@@ -15,17 +15,16 @@ module Magan
       end
 
       def to_re
-        map(&:to_re).join '|'
+        map(&:to_re).join
       end
 
       def vars
         flat_map &:vars
       end
 
-      WRAP_OPEN = "lambda {|;r_|\n"
+      WRAP_OPEN = "lambda {|;r_, e_|\n"
       WRAP_CLOSE = "}[]\n"
-      STACK_OPEN = "@src.push\n"
-      STACK_CLOSE = "@src.drop\nr_\n".lines
+      INIT_R = "r_ = []\n"
 
       def generate ct, wrap=true
         if literal?
@@ -37,27 +36,17 @@ module Magan
           ct.add WRAP_OPEN
           ct.push_indent
         end
+        ct.add INIT_R
 
-        ct.add STACK_OPEN
-        before = "#{ct.indent}r_ =\n"
-        after = "#{ct.indent}if r_
-#{ct.indent}  @src.drop
-#{ct.indent}  return r_
-#{ct.indent}else
-#{ct.indent}  @src.restore
-#{ct.indent}end
-"
+        before = "#{ct.indent}e_ =\n"
+        after = "#{ct.indent}return unless e_\n#{ct.indent}r_ << e_\n"
         ct.push_indent
-        *es, last = self
-        es.each do |e|
+        each do |e|
           ct << before
           e.generate ct
           ct << after
         end
         ct.pop_indent
-        last.generate ct, false
-
-        STACK_CLOSE.each{|line| ct.add line }
 
         if wrap
           ct.pop_indent

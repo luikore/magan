@@ -1,5 +1,5 @@
 module Magan
-  module Nodes
+  module RuleNodes
     class S < Struct
       def inspect
         pretty_inspect # may not defined yet, don't alias
@@ -202,6 +202,6 @@ module Magan
   end
 
   class RuleParser
-    include Nodes
+    include RuleNodes
   end
 end

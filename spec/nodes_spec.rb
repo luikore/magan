@@ -1,7 +1,7 @@
 require_relative "spec_helper"
 
-module Magan; module Nodes
-  describe Nodes do
+module Magan; module RuleNodes
+  describe RuleNodes do
     def generate node
       ct = CodeGenerateContext.new ''
       node.generate ct
@@ -40,7 +40,7 @@ module Magan; module Nodes
       assert_equal [], eval(pred)
     end
 
-    it "parses hybrid nodes" do
+    it "parses hybrid rule_nodes" do
       or1 = Or.new
       seq1 = Seq.new
       seq1 << Ref['a'] << Unit['x:', Re['b'], '*']

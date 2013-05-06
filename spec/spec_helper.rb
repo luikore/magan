@@ -43,13 +43,13 @@ end
 
 class ExampleGrammar
   extend Magan
-  grammar <<-RUBY
+  grammar %q|
     expr = _ add _
-    int  = '-'? \\d+
+    int  = '-'? \d+
     atom = '(' _ expr _ ')' / int
     mul  = atom (_ [*/] _ atom)*
     add  = mul (_ [+-] _ mul)*
-    _    = [\\ \\t]*
-  RUBY
+    _    = [\ \t]*
+  |
   compile :expr
 end

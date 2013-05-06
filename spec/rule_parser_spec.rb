@@ -1,6 +1,6 @@
 require_relative "spec_helper"
 
-module Magan; module Nodes
+module Magan; module RuleNodes
   describe RuleParser do
 
     it "parses atom" do
