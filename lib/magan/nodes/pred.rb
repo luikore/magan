@@ -14,32 +14,37 @@ module Magan
         end
       end
 
-      # note: parser ensures that quantifier can never be '?' or '*'
-      def generate indent, wrap=true
-        return "#{indent}(@src.match_bytesize(%r\"#{to_re}\") ? [] : nil)" if literal?
+      WRAP_OPEN   = "lambda{|;r_, e_|\n"
+      WRAP_CLOSE  = "}[]\n"
+      STACK_OPEN  = "@src.push\n"
+      STACK_CLOSE = <<RUBY.lines
+if r_
+  @src.pop
+  []
+else
+  @src.drop
+  nil
+end
+RUBY
 
-        if wrap
-          r = "#{indent}lambda{|;r_, e_|\n"
-          inner_indent = indent + '  '
-        else
-          r = ''
-          inner_indent = indent
+      # note: parser ensures that quantifier can never be '?' or '*'
+      def generate ct, wrap=true
+        if literal?
+          ct.add %Q|(@src.match_bytesize(%r"#{to_re}") ? [] : nil)\n|
+          return
         end
 
-        r << "#{inner_indent}@src.push\n"
-        r << Unit[nil, atom, quantifier].generate(inner_indent, false)
-        r << "#{inner_indent}if r_
-#{inner_indent}  @src.pop
-#{inner_indent}  []
-#{inner_indent}else
-#{inner_indent}  @src.drop
-#{inner_indent}  nil
-#{inner_indent}end
-"
         if wrap
-          r << "#{indent}}[]"
-        else
-          r
+          ct.add WRAP_OPEN
+          ct.push_indent
+        end
+
+        ct.add STACK_OPEN
+        Unit[nil, atom, quantifier].generate ct, false
+        STACK_CLOSE.each{|line| ct.add line }
+        if wrap
+          ct.pop_indent
+          ct.add WRAP_CLOSE
         end
       end
     end

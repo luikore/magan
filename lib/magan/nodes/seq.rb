@@ -18,32 +18,31 @@ module Magan
         map(&:to_re).join
       end
 
-      def generate indent, wrap=true
-        return "#{indent}@src.scan(%r\"#{to_re}\")\n" if literal?
-
-        if wrap
-          r = "#{indent}lambda {|;r_, e_|\n"
-          inner_indent = indent + '  '
-        else
-          r = ''
-          inner_indent = indent
+      def generate ct, wrap=true
+        if literal?
+          ct.add %Q|@src.scan(%r"#{to_re}")\n|
+          return
         end
 
-        r << inner_indent << "r_ = []\n"
-        code = "#{inner_indent}e_ =
-%s
-#{inner_indent}return unless e_
-#{inner_indent}r_ << e_
-"
-        e_indent = inner_indent + '  '
+        if wrap
+          ct.add "lambda {|;r_, e_|\n"
+          ct.push_indent
+        end
+        ct.add "r_ = []\n"
+
+        before = "#{ct.indent}e_ =\n"
+        after = "#{ct.indent}return unless e_\n#{ct.indent}r_ << e_\n"
+        ct.push_indent
         each do |e|
-          r << (code % e.generate(e_indent))
+          ct << before
+          e.generate ct
+          ct << after
         end
+        ct.pop_indent
 
         if wrap
-          r << indent << "}[]"
-        else
-          r
+          ct.pop_indent
+          ct.add "}[]\n"
         end
       end
     end

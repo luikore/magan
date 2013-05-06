@@ -12,11 +12,26 @@ module Magan
         "(?:#{atom.to_re})#{QUANTIFIER_TO_RE[quantifier]}"
       end
 
+      WRAP_OPEN  = "lambda{|;r_, e_|\n"
+      WRAP_CLOSE = "}[]\n"
+      MANY_OPEN  = [
+        "loop do\n",
+        "  @src.push\n",
+        "  e_ =\n"
+      ]
+      MANY_CLOSE = [
+        "  if e_ then @src.drop; r_ << e_ else @src.pop; break; end\n",
+        "end\n",
+        "r_\n"
+      ]
+
       # note:
       #   for '?', the result is [r_] or []
       #   for '*' and '+', the result is r_
-      def generate indent, wrap=true
-        return "#{indent}@src.scan(%r\"#{to_re}\")" if literal?
+      def generate ct, wrap=true
+        if literal?
+          return ct.add %Q|@src.scan(%r"#{to_re}")\n|
+        end
 
         if var
           assign =
@@ -28,51 +43,45 @@ module Magan
         end
 
         if wrap
-          r = "#{indent}lambda{|;r_, e_|\n"
-          inner_indent = indent + '  '
-        else
-          r = ''
-          inner_indent = indent
+          ct.add WRAP_OPEN
+          ct.push_indent
         end
 
         case quantifier
         when '?'
-          r << "#{inner_indent}@src.push
-#{inner_indent}r_ =
-#{atom.generate inner_indent + '  '}
-#{inner_indent}if r_ then #{assign} @src.drop; [r_] else @src.pop; [] end"
+          ct.add "@src.push\n"
+          ct.add "r_ =\n"
+          ct.push_indent
+          atom.generate ct
+          ct.pop_indent
+          ct.add "if r_ then #{assign} @src.drop; [r_] else @src.pop; [] end\n"
 
         when '*', '+'
           case quantifier
           when '*'
-            r << "#{inner_indent}r_ = []\n"
+            ct.add "r_ = []\n"
           else
-            r << "#{inner_indent}e_ =
-#{atom.generate inner_indent + '  '}
-#{inner_indent}return unless e_
-#{inner_indent}r_ = [e_]
-"
+            ct.add "e_ =\n"
+            ct.child atom
+            ct.add "return unless e_\n"
+            ct.add "r_ = [e_]\n"
           end
-          r << "#{inner_indent}#{assign}
-#{inner_indent}loop do
-#{inner_indent}  @src.push
-#{inner_indent}  e_ =
-#{atom.generate inner_indent + '    '}
-#{inner_indent}  if e_ then @src.drop; r_ << e_ else @src.pop; break; end
-#{inner_indent}end
-#{inner_indent}r_
-"
+          if assign
+            ct.add assign + "\n"
+          end
+          MANY_OPEN.each{|line| ct.add line }
+          ct.child atom
+          MANY_CLOSE.each{|line| ct.add line }
+
         else
-          r << "#{inner_indent}r_ =
-#{atom.generate inner_indent + '  '}
-#{inner_indent}if r_ then #{assign} r_; end
-"
+          ct.add "r_ =\n"
+          ct.child atom
+          ct.add "if r_ then #{assign} r_; end\n"
         end
 
         if wrap
-          r << indent << "}[]"
-        else
-          r
+          ct.pop_indent
+          ct.add WRAP_CLOSE
         end
       end
     end

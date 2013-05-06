@@ -24,6 +24,33 @@ module Magan
       end
     end
 
+    class CodeGenerateContext < Array
+      def initialize indent
+        @indent = indent
+        super()
+      end
+      attr_reader :indent
+
+      def push_indent
+        @indent += '  '
+      end
+
+      def pop_indent
+        @indent = @indent[0...-2]
+      end
+
+      def add line
+        self << @indent << line
+      end
+
+      def child node
+        outer_indent = @indent
+        @indent += '  '
+        node.generate self
+        @indent = outer_indent
+      end
+    end
+
     QUANTIFIER_TO_RE = {
       '*' => '*+',
       '+' => '++',
@@ -52,7 +79,7 @@ module Magan
         ''
       end
 
-      def generate indent, wrap=true
+      def generate ct, wrap=true
         '[]'
       end
     end
@@ -66,7 +93,7 @@ module Magan
         '(?:(?=\A)\A)'
       end
 
-      def generate indent, wrap=true
+      def generate ct, wrap=true
         'nil'
       end
     end
@@ -80,8 +107,8 @@ module Magan
 
       alias to_re re
 
-      def generate indent, wrap=true
-        "#{indent}@src.scan(%r\"#{re}\")"
+      def generate ct, wrap=true
+        ct.add %Q|@src.scan(%r"#{re}")\n|
       end
     end
 
@@ -91,8 +118,8 @@ module Magan
         false
       end
 
-      def generate indent, wrap=true
-        "#{indent}parse_#{id}()"
+      def generate ct, wrap=true
+        ct.add "parse_#{id}()\n"
       end
     end
 
@@ -102,7 +129,7 @@ module Magan
         false
       end
 
-      def generate indent, wrap=true
+      def generate ct, wrap=true
         # todo
       end
     end
@@ -115,7 +142,7 @@ module Magan
 
       # no to_re
 
-      def generate indent, wrap=true
+      def generate ct, wrap=true
         # todo
       end
     end
@@ -123,7 +150,9 @@ module Magan
     Rule = S.new :name, :expr, :block
     class Rule
       def generate
-        expr.generate '    ', false
+        ctx = CodeGenerateContext.new '    '
+        expr.generate ctx, false
+        ctx.join
       end
     end
   end

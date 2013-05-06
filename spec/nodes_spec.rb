@@ -2,8 +2,14 @@ require_relative "spec_helper"
 
 module Magan; module Nodes
   describe Nodes do
+    def generate node
+      ct = CodeGenerateContext.new ''
+      node.generate ct
+      ct.join
+    end
+
     it "parses ref unit" do
-      unit = Unit[nil, Ref['a'], '*'].generate ''
+      unit = generate Unit[nil, Ref['a'], '*']
       @src = ZScan.new 'aa'
       assert_equal ['a', 'a'], eval(unit)
       @src = ZScan.new ''
@@ -11,7 +17,7 @@ module Magan; module Nodes
     end
 
     it "parses literal unit" do
-      unit = Unit[nil, Or[Re['a'], Re['b']], '+'].generate ''
+      unit = generate Unit[nil, Or[Re['a'], Re['b']], '+']
       @src = ZScan.new 'abac'
       assert_equal 'aba', eval(unit)
       @src = ZScan.new 'c'
@@ -19,7 +25,7 @@ module Magan; module Nodes
     end
 
     it "parses ref predicate" do
-      pred = Pred['&', Ref['a'], nil].generate ''
+      pred = generate Pred['&', Ref['a'], nil]
       @src = ZScan.new 'a'
       assert_equal [], eval(pred)
       @src = ZScan.new ''
@@ -27,7 +33,7 @@ module Magan; module Nodes
     end
 
     it "parses literal predicate" do
-      pred = Pred['<&', Re['b'], nil].generate ''
+      pred = generate Pred['<&', Re['b'], nil]
       @src = ZScan.new 'bc'
       assert_equal nil, eval(pred)
       @src.pos = 1
@@ -41,7 +47,7 @@ module Magan; module Nodes
       seq2 = Seq.new
       seq2 << Re['b'] << Unit[nil, Ref['a'], '+']
       or1 << seq1 << seq2
-      code = or1.generate('  ')
+      code = generate or1
 
       @src = ZScan.new "baa"
       assert_equal ['b', ['a', 'a']], eval(code)

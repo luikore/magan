@@ -18,40 +18,46 @@ module Magan
         map(&:to_re).join '|'
       end
 
-      def generate indent, wrap=true
-        return "#{indent}@src.scan(%r\"#{to_re}\")" if literal?
+      WRAP_OPEN = "lambda {|;r_|\n"
+      WRAP_CLOSE = "}[]\n"
+      STACK_OPEN = "@src.push\n"
+      STACK_CLOSE = "@src.drop\nr_\n".lines
 
-        if wrap
-          r = "#{indent}lambda {|;r_|\n"
-          inner_indent = indent + '  '
-        else
-          r = ''
-          inner_indent = indent
+      def generate ct, wrap=true
+        if literal?
+          ct.add %Q|@src.scan(%r"#{to_re}")\n|
+          return
         end
 
-        r << "#{inner_indent}@src.push\n"
-        *es, last = self
-        code = "#{inner_indent}r_ =
-%s
-#{inner_indent}if r_
-#{inner_indent}  @src.drop
-#{inner_indent}  return r_
-#{inner_indent}else
-#{inner_indent}  @src.restore
-#{inner_indent}end
-"
-        e_indent = inner_indent + '  '
-        es.each {|e|
-          r << (code % e.generate(e_indent))
-        }
-        r << last.generate(inner_indent, false) << "\n"
-
-        r << "#{inner_indent}@src.drop\n"
-        r << "#{inner_indent}r_\n"
         if wrap
-          r << "#{indent}}[]"
-        else
-          r
+          ct.add WRAP_OPEN
+          ct.push_indent
+        end
+
+        ct.add STACK_OPEN
+        before = "#{ct.indent}r_ =\n"
+        after = "#{ct.indent}if r_
+#{ct.indent}  @src.drop
+#{ct.indent}  return r_
+#{ct.indent}else
+#{ct.indent}  @src.restore
+#{ct.indent}end
+"
+        ct.push_indent
+        *es, last = self
+        es.each do |e|
+          ct << before
+          e.generate ct
+          ct << after
+        end
+        ct.pop_indent
+        last.generate ct, false
+
+        STACK_CLOSE.each{|line| ct.add line }
+
+        if wrap
+          ct.pop_indent
+          ct.add WRAP_CLOSE
         end
       end
     end
