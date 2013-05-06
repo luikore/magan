@@ -47,7 +47,7 @@ class ExampleGrammar
     expr = _ add _
     int  = '-'? \\d+
     atom = '(' _ expr _ ')' / int
-    mul  = atom (_ [*\\/] _ atom)*
+    mul  = atom (_ [*/] _ atom)*
     add  = mul (_ [+-] _ mul)*
     _    = [\\ \\t]*
   RUBY

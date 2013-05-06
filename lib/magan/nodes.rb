@@ -88,7 +88,7 @@ module Magan
         #   for '?', the result is [r_] or []
         #   for '*' and '+', the result is r_
         def generate indent, wrap=true
-          return "#{indent}@src.scan(/#{to_re}/)" if literal?
+          return "#{indent}@src.scan(%r\"#{to_re}\")" if literal?
 
           if var
             assign =
@@ -165,7 +165,7 @@ module Magan
 
         # note: parser ensures that quantifier can never be '?' or '*'
         def generate indent, wrap=true
-          return "#{indent}(@src.scan(/#{to_re}/) ? [] : nil)" if literal?
+          return "#{indent}(@src.scan(%r\"#{to_re}\") ? [] : nil)" if literal?
 
           if wrap
             r = "#{indent}lambda{|;r_, e_|\n"
@@ -203,7 +203,7 @@ module Magan
         alias to_re re
 
         def generate indent, wrap=true
-          "#{indent}@src.scan(/#{re}/)"
+          "#{indent}@src.scan(%r\"#{re}\")"
         end
       end
 
@@ -248,7 +248,7 @@ module Magan
         end
 
         def generate indent, wrap=true
-          return "#{indent}@src.scan(/#{to_re}/)" if literal?
+          return "#{indent}@src.scan(%r\"#{to_re}\")" if literal?
 
           if wrap
             r = "#{indent}lambda {|;r_|\n"
@@ -304,7 +304,7 @@ module Magan
         end
 
         def generate indent, wrap=true
-          return "#{indent}@src.scan(/#{to_re}/)\n" if literal?
+          return "#{indent}@src.scan(%r\"#{to_re}\")\n" if literal?
 
           if wrap
             r = "#{indent}lambda {|;r_, e_|\n"

@@ -375,6 +375,18 @@ It's common misunderstanding that regexp engines are weaker than parser generato
 
 The only weakness of Onigmo is, it's hard to debug into the matching process, fixing this weakness is one goal of Magan.
 
+## Inline grammar caveats
+
+You have to double backslashes. For example:
+
+```ruby
+class ExampleGrammar
+  extend Magan
+  grammar "nbsp = [\\ \\t]*"
+  compile :nbsp
+end
+```
+
 # License
 
 BSD, see copying
