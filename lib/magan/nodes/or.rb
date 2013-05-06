@@ -18,6 +18,10 @@ module Magan
         map(&:to_re).join '|'
       end
 
+      def vars
+        flat_map &:vars
+      end
+
       WRAP_OPEN = "lambda {|;r_|\n"
       WRAP_CLOSE = "}[]\n"
       STACK_OPEN = "@src.push\n"

@@ -14,6 +14,10 @@ module Magan
         end
       end
 
+      def vars
+        atom.vars
+      end
+
       WRAP_OPEN   = "lambda{|;r_, e_|\n"
       WRAP_CLOSE  = "}[]\n"
       STACK_OPEN  = "@src.push\n"

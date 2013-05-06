@@ -12,6 +12,12 @@ module Magan
         "(?:#{atom.to_re})#{QUANTIFIER_TO_RE[quantifier]}"
       end
 
+      def vars
+        r = atom.vars
+        r << var if var
+        r
+      end
+
       WRAP_OPEN  = "lambda{|;r_, e_|\n"
       WRAP_CLOSE = "}[]\n"
       MANY_OPEN  = [

@@ -80,6 +80,10 @@ module Magan
         ''
       end
 
+      def vars
+        []
+      end
+
       def generate ct, wrap=true
         "[]\n"
       end
@@ -92,6 +96,10 @@ module Magan
 
       def to_re
         '(?:(?=\A)\A)'
+      end
+
+      def vars
+        []
       end
 
       def generate ct, wrap=true
@@ -108,6 +116,10 @@ module Magan
 
       alias to_re re
 
+      def vars
+        []
+      end
+
       def generate ct, wrap=true
         ct.add %Q|@src.scan(%r"#{re}")\n|
       end
@@ -117,6 +129,10 @@ module Magan
     class Ref
       def literal?
         false
+      end
+
+      def vars
+        []
       end
 
       def generate ct, wrap=true
@@ -130,6 +146,11 @@ module Magan
         false
       end
 
+      def vars
+        # todo: this right?
+        [var]
+      end
+
       def generate ct, wrap=true
         # todo
       end
@@ -141,7 +162,9 @@ module Magan
         false
       end
 
-      # no to_re
+      def vars
+        args.flat_map &:vars
+      end
 
       def generate ct, wrap=true
         # todo
@@ -152,6 +175,26 @@ module Magan
     class Rule
       def generate
         ctx = CodeGenerateContext.new '    '
+
+        vars = expr.vars
+        vars.uniq!
+        vars.map!{|v| [v[/^\w+/], v[/:+$/]] }
+        var_group = vars.group_by(&:first)
+        ambig_var, _ = var_group.find do |_, vs|
+          vs.size > 1
+        end
+        if ambig_var
+          raise "ambiguous var definition: #{ambig_var}, it should stick to one type"
+        end
+
+        vars.each do |var|
+          if var.end_with?('::')
+            ctx.add "#{var[0...-2]} = []\n"
+          else
+            ctx.add "#{var[0...-1]} = nil\n"
+          end
+        end
+
         expr.generate ctx, false
         ctx.join
       end
