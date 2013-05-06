@@ -13,7 +13,7 @@ module Magan
   def self.extended klass
     klass.class_eval <<-RUBY
       def initialize src
-        @src = src
+        @src = ZScan.new src
       end
     RUBY
   end
@@ -25,12 +25,11 @@ module Magan
 
   def grammar grammar_src
     raise 'need a class' unless is_a?(Class)
-    @rules = RulesParser.new(grammar_src).parse
+    @rules = RuleParser.new(grammar_src).parse
     @generated = {}
     @rules.each do |name, _|
       @generated[name] = false
     end
-    generate_grammar
   end
 
   def compile entrance=:main
@@ -39,19 +38,19 @@ module Magan
 
     # update only changed ones
     code = ''
-    @generated.each do |name, generated|
+    @generated.to_a.each do |(name, generated)|
       unless generated
-        code = @rules[name].generate
+        code_content = @rules[name].generate
         code << <<-RUBY << "\n"
-          def parse_#{name}
-            #{code}
-          end
+  def parse_#{name}
+#{code_content}
+  end
         RUBY
         @generated[name] = true
       end
     end
 
-    code << "alias parse parse_#@entrance"
+    code << "  alias parse parse_#@entrance"
     class_eval code
   end
 

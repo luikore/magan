@@ -112,7 +112,7 @@ module Magan
             r << "#{inner_indent}@src.push_pos
 #{inner_indent}r_ =
 #{atom.generate inner_indent + '  '}
-#{inner_indent}if r_ then #{assign}; @src.drop_top; [r_] else @src.pop_pos; [] end"
+#{inner_indent}if r_ then #{assign} @src.drop_top; [r_] else @src.pop_pos; [] end"
 
           when '*', '+'
             case quantifier
@@ -137,7 +137,7 @@ module Magan
           else
             r << "#{inner_indent}r_ =
 #{atom.generate inner_indent + '  '}
-#{inner_indent}if r_ then #{assign}; r_; end
+#{inner_indent}if r_ then #{assign} r_; end
 "
           end
 
@@ -267,6 +267,7 @@ module Magan
 #{inner_indent}  return r_
 #{inner_indent}else
 #{inner_indent}  @src.pop_pos
+#{inner_indent}  @src.push_pos
 #{inner_indent}end
 "
           e_indent = inner_indent + '  '
@@ -275,6 +276,8 @@ module Magan
           }
           r << last.generate(inner_indent, false) << "\n"
 
+          r << "#{inner_indent}@src.drop_top\n"
+          r << "#{inner_indent}r_\n"
           if wrap
             r << "#{indent}}[]"
           else
@@ -312,7 +315,7 @@ module Magan
             inner_indent = indent
           end
 
-          r << inner_indent << "r_ = Array.new #{size}\n"
+          r << inner_indent << "r_ = []\n"
           code = "#{inner_indent}e_ =
 %s
 #{inner_indent}return unless e_

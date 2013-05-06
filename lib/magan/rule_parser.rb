@@ -2,7 +2,9 @@ module Magan
   class RuleParser
     include Nodes
 
-    ID = /(?!\d)\w+/
+    RULE_ID = /(?!\d)\w+/
+
+    ID = /(?!\d)(?>\w+)(?!\s*=)/
 
     STRING = /
       "(?>
@@ -37,10 +39,10 @@ module Magan
 
     <<-RUBY
     rules     = join[rule, \s* "\n" \s*]
-    rule      = id _ '=' _ expr _ block?
+    rule      = id _ '=' _ expr (_ block)?
     expr      = join[seq, _ '/' _]
     seq       = join[anchor / pred / unit, _]
-    pred      = pred_prefix _ atom _ quantifier?
+    pred      = pred_prefix _ atom (_ quantifier)?
     unit      = var? _ atom _ quantifier?
     atom      = paren / helper / id / string / char_class / back_ref
     paren     = '(' _ expr _ ')'
@@ -59,6 +61,8 @@ module Magan
         raise SyntaxError, "expect a rule at #{@src.pos}"
       end
       unless @src.eos?
+        puts (@src.string[0...(@src.pos)].inspect + ' <|> ' + @src.rest.inspect)
+        puts ''
         raise SyntaxError, "syntax error at #{@src.pos}"
       end
       @rules
@@ -71,15 +75,17 @@ module Magan
     end
 
     def parse_rule
-      id = @src.scan ID
+      id = @src.scan RULE_ID
       return unless id
       skip_space
       return unless @src.scan(/=/)
       skip_space
       expr = parse_expr
       return unless expr
-      skip_space
-      block = maybe{ parse_block }
+      block = maybe{
+        skip_space
+        parse_block
+      }
 
       if @rules[id]
         raise "redefinition of rule: #{id}"
@@ -160,8 +166,10 @@ module Magan
       skip_space
       atom = parse_atom
       return unless atom
-      skip_space
-      quantifier = maybe{ @src.scan QUANTIFIER }
+      quantifier = maybe{
+        skip_space
+        @src.scan QUANTIFIER
+      }
       Unit[var, atom, quantifier]
     end
 
@@ -183,7 +191,7 @@ module Magan
       end
 
       if string = (@src.scan STRING)
-        return Re[YAML.load(string)]
+        return Re[Regexp.escape(YAML.load string)]
       end
 
       if char_class = (@src.scan CHAR_CLASS)
@@ -284,8 +292,7 @@ module Magan
     end
 
     def skip_space
-      until @src.scan(/\s*(\#.*$\s*)*/).empty?
-      end
+      @src.skip(/\s*(\#.*$\s*)*/)
     end
   end
 end

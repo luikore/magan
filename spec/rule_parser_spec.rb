@@ -4,10 +4,10 @@ module Magan
   describe RuleParser do
     it "parses atom" do
       r = parse :atom, '"abc\u0023"'
-      assert_equal "abc\x23", r.re
+      assert_equal Regexp.escape("abc\x23"), r.re
 
       r = parse :atom, "'abc\\u0023'"
-      assert_equal 'abc\u0023', r.re
+      assert_equal Regexp.escape('abc\u0023'), r.re
 
       r = parse :atom, 'hello'
       assert_equal 'hello', r.id

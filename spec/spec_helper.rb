@@ -41,11 +41,15 @@ RSpec.configure do |config|
   end
 end
 
-if false
 class ExampleGrammar
   extend Magan
   grammar <<-RUBY
-main = 'a'
+    expr = _ add _
+    int  = '-'? \\d+
+    atom = '(' _ expr _ ')' / int
+    mul  = atom (_ [*\\/] _ atom)*
+    add  = mul (_ [+-] _ mul)*
+    _    = [\\ \\t]*
   RUBY
-end
+  compile :expr
 end
