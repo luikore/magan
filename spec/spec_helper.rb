@@ -42,7 +42,7 @@ RSpec.configure do |config|
 end
 
 class ExampleGrammar
-  extend Magan
+  include Magan
   grammar %q|
     expr = _ add _
     int  = '-'? \d+

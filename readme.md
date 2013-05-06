@@ -254,7 +254,7 @@ You can customize your helpers too. For example, if you have a `close` helper im
 
 ```ruby
 class MyParser
-  extend Magan
+  include Magan
   grammar File.read('a_syntax.magan')
   helper[:close] = -> backref_parser {
     # Note that a helper is a transformer for rules instead of results
@@ -389,7 +389,7 @@ You have to double backslashes if using double quotes. For example:
 
 ```ruby
 class ExampleGrammar
-  extend Magan
+  include Magan
   grammar "nbsp = [\\ \\t]*"
   compile :nbsp
 end
@@ -399,7 +399,7 @@ The single quote form `%q|...|` plays best with our grammar:
 
 ```ruby
 class ArithmeticGrammar
-  extend Magan
+  include Magan
   grammar %q|
     expr = _ add _
     int  = '-'? \d+

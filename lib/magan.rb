@@ -12,18 +12,22 @@ require_relative "magan/rule_parser/first_block_stripper"
 module Magan
   VERSION = '0.1'
 
+  class Node < Array
+    def initialize type
+      @type = type
+      super
+    end
+    attr_reader :type
+  end
+
   attr_reader :rules, :entrance
 
-  def self.extended klass
+  def self.included klass
     klass.class_eval <<-RUBY
       def initialize src
         @src = ZScan.new src
       end
     RUBY
-  end
-
-  # it's easy to write include instead of extend, so make it more robust
-  def self.included klass
     klass.extend self
   end
 
