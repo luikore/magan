@@ -100,9 +100,9 @@ As you can see in the example, rules are declarative, not neccesary to be decala
 
 ### Reference to variable (`\k`, A.K.A back reference)
 
-The syntax is much like back references in Onigmo, here's an example for matching quoted strings:
+The syntax is much like back references in Onigmo, here's an example for matching strings that can either be single quoted or double quoted:
 
-    string = open:['"] .*? \k<open>
+    string = open:['"] ("\\" . / !\k<open>.)* \k<open>
 
 Note: we use the term **reference** here in contrast to **literal**. A **literal** expression means it is fully composed without using any **reference**. For example, `("a"+"b"+)?` is a literal but `a` is not.
 

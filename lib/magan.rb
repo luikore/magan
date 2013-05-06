@@ -7,7 +7,7 @@ require_relative "magan/nodes/pred"
 require_relative "magan/nodes/seq"
 require_relative "magan/nodes/or"
 require_relative "magan/rule_parser"
-require_relative "magan/first_block_stripper"
+require_relative "magan/rule_parser/first_block_stripper"
 
 module Magan
   VERSION = '0.1'

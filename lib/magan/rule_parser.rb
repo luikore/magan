@@ -1,7 +1,5 @@
 module Magan
   class RuleParser
-    include Nodes
-
     RULE_ID = /(?!\d)\w+/
 
     ID = /(?!\d)(?>\w+)(?!\s*=)/
