@@ -266,8 +266,7 @@ module Magan
 #{inner_indent}  @src.drop_top
 #{inner_indent}  return r_
 #{inner_indent}else
-#{inner_indent}  @src.pop_pos
-#{inner_indent}  @src.push_pos
+#{inner_indent}  @src.resume_top
 #{inner_indent}end
 "
           e_indent = inner_indent + '  '

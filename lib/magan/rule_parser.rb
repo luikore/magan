@@ -129,11 +129,12 @@ module Magan
         return Re[anchor]
       end
 
-      pos = @src.pos
+      @src.push_pos
       if pred = parse_pred
+        @src.drop_top
         return pred
       end
-      @src.pos = pos
+      @src.pop_pos
 
       parse_unit
     end
@@ -174,17 +175,19 @@ module Magan
     end
 
     def parse_atom
-      pos = @src.pos
+      @src.push_pos
 
       if expr = parse_paren
+        @src.drop_top
         return expr
       end
-      @src.pos = pos
+      @src.resume_top
 
       if helper = parse_helper
+        @src.drop_top
         return helper
       end
-      @src.pos = pos
+      @src.pop_pos
 
       if id = (@src.scan ID)
         return Ref[id]
@@ -257,12 +260,13 @@ module Magan
     private
 
     def maybe
-      pos = @src.pos
+      @src.push_pos
       res = yield
       if res
+        @src.drop_top
         res
       else
-        @src.pos = pos
+        @src.pop_pos
         nil
       end
     end
@@ -274,16 +278,17 @@ module Magan
       arr << res
 
       loop do
-        pos = @src.pos
+        @src.push_pos
         unless yield
-          @src.pos = pos
+          @src.pop_pos
           break
         end
         res = send arg1
         if res
+          @src.drop_top
           arr << res
         else
-          @src.pos = pos
+          @src.pop_pos
           break
         end
       end
