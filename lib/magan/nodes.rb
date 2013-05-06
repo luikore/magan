@@ -109,10 +109,10 @@ module Magan
 
           case quantifier
           when '?'
-            r << "#{inner_indent}@src.push_pos
+            r << "#{inner_indent}@src.push
 #{inner_indent}r_ =
 #{atom.generate inner_indent + '  '}
-#{inner_indent}if r_ then #{assign} @src.drop_top; [r_] else @src.pop_pos; [] end"
+#{inner_indent}if r_ then #{assign} @src.drop; [r_] else @src.pop; [] end"
 
           when '*', '+'
             case quantifier
@@ -127,10 +127,10 @@ module Magan
             end
             r << "#{inner_indent}#{assign}
 #{inner_indent}loop do
-#{inner_indent}  @src.push_pos
+#{inner_indent}  @src.push
 #{inner_indent}  e_ =
 #{atom.generate inner_indent + '    '}
-#{inner_indent}  if e_ then @src.drop_top; r_ << e_ else @src.pop_pos; break; end
+#{inner_indent}  if e_ then @src.drop; r_ << e_ else @src.pop; break; end
 #{inner_indent}end
 #{inner_indent}r_
 "
@@ -175,13 +175,13 @@ module Magan
             inner_indent = indent
           end
 
-          r << "#{inner_indent}@src.push_pos\n"
+          r << "#{inner_indent}@src.push\n"
           r << Unit[nil, atom, quantifier].generate(inner_indent, false)
           r << "#{inner_indent}if r_
-#{inner_indent}  @src.pop_pos
+#{inner_indent}  @src.pop
 #{inner_indent}  []
 #{inner_indent}else
-#{inner_indent}  @src.drop_top
+#{inner_indent}  @src.drop
 #{inner_indent}  nil
 #{inner_indent}end
 "
@@ -258,15 +258,15 @@ module Magan
             inner_indent = indent
           end
 
-          r << "#{inner_indent}@src.push_pos\n"
+          r << "#{inner_indent}@src.push\n"
           *es, last = self
           code = "#{inner_indent}r_ =
 %s
 #{inner_indent}if r_
-#{inner_indent}  @src.drop_top
+#{inner_indent}  @src.drop
 #{inner_indent}  return r_
 #{inner_indent}else
-#{inner_indent}  @src.resume_top
+#{inner_indent}  @src.restore
 #{inner_indent}end
 "
           e_indent = inner_indent + '  '
@@ -275,7 +275,7 @@ module Magan
           }
           r << last.generate(inner_indent, false) << "\n"
 
-          r << "#{inner_indent}@src.drop_top\n"
+          r << "#{inner_indent}@src.drop\n"
           r << "#{inner_indent}r_\n"
           if wrap
             r << "#{indent}}[]"

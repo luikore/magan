@@ -129,12 +129,12 @@ module Magan
         return Re[anchor]
       end
 
-      @src.push_pos
+      @src.push
       if pred = parse_pred
-        @src.drop_top
+        @src.drop
         return pred
       end
-      @src.pop_pos
+      @src.pop
 
       parse_unit
     end
@@ -175,19 +175,19 @@ module Magan
     end
 
     def parse_atom
-      @src.push_pos
+      @src.push
 
       if expr = parse_paren
-        @src.drop_top
+        @src.drop
         return expr
       end
-      @src.resume_top
+      @src.restore
 
       if helper = parse_helper
-        @src.drop_top
+        @src.drop
         return helper
       end
-      @src.pop_pos
+      @src.pop
 
       if id = (@src.scan ID)
         return Ref[id]
@@ -245,7 +245,7 @@ module Magan
     end
 
     def parse_block
-      return unless @src.bmatch?(/\{/)
+      return unless @src.match_bytesize(/\{/)
       s = @src.string[@src.pos..-1]
       res = FirstBlockStripper.new(s).parse
       if res.is_a?(String)
@@ -260,13 +260,13 @@ module Magan
     private
 
     def maybe
-      @src.push_pos
+      @src.push
       res = yield
       if res
-        @src.drop_top
+        @src.drop
         res
       else
-        @src.pop_pos
+        @src.pop
         nil
       end
     end
@@ -278,17 +278,17 @@ module Magan
       arr << res
 
       loop do
-        @src.push_pos
+        @src.push
         unless yield
-          @src.pop_pos
+          @src.pop
           break
         end
         res = send arg1
         if res
-          @src.drop_top
+          @src.drop
           arr << res
         else
-          @src.pop_pos
+          @src.pop
           break
         end
       end
