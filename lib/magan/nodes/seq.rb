@@ -18,6 +18,10 @@ module Magan
         map(&:to_re).join
       end
 
+      WRAP_OPEN = "lambda {|;r_, e_|\n"
+      WRAP_CLOSE = "}[]\n"
+      INIT_R = "r_ = []\n"
+
       def generate ct, wrap=true
         if literal?
           ct.add %Q|@src.scan(%r"#{to_re}")\n|
@@ -25,10 +29,10 @@ module Magan
         end
 
         if wrap
-          ct.add "lambda {|;r_, e_|\n"
+          ct.add WRAP_OPEN
           ct.push_indent
         end
-        ct.add "r_ = []\n"
+        ct.add INIT_R
 
         before = "#{ct.indent}e_ =\n"
         after = "#{ct.indent}return unless e_\n#{ct.indent}r_ << e_\n"
@@ -42,7 +46,7 @@ module Magan
 
         if wrap
           ct.pop_indent
-          ct.add "}[]\n"
+          ct.add WRAP_CLOSE
         end
       end
     end

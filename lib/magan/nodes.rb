@@ -40,6 +40,7 @@ module Magan
       end
 
       def add line
+        # raise "bad line" unless line.end_with?("\n")
         self << @indent << line
       end
 
@@ -80,7 +81,7 @@ module Magan
       end
 
       def generate ct, wrap=true
-        '[]'
+        "[]\n"
       end
     end
 
@@ -94,7 +95,7 @@ module Magan
       end
 
       def generate ct, wrap=true
-        'nil'
+        "nil\n"
       end
     end
 
