@@ -1,7 +1,7 @@
 require_relative "spec_helper"
 
-module Magan::RuleParser::Nodes
-  describe "nodes" do
+module Magan; module Nodes
+  describe Nodes do
     it "parses ref unit" do
       unit = Unit[nil, Ref['a'], '*'].generate ''
       @src = ZScan.new 'aa'
@@ -54,4 +54,4 @@ module Magan::RuleParser::Nodes
       @src.scan /a/
     end
   end
-end
+end; end

@@ -1,7 +1,8 @@
 require_relative "spec_helper"
 
-module Magan
+module Magan; module Nodes
   describe RuleParser do
+
     it "parses atom" do
       r = parse :atom, '"abc\u0023"'
       assert_equal Regexp.escape("abc\x23"), r.re
@@ -26,14 +27,14 @@ module Magan
       r = parse :seq, 'a x:b+ $ \k<x>'
       assert_equal unit(nil, 'a'), r[0]
       assert_equal unit('x:', 'b', '+'), r[1]
-      assert_equal RuleParser::Re['$'], r[2]
-      assert_equal RuleParser::Unit[nil, RuleParser::BackRef['x']], r[3]
+      assert_equal Re['$'], r[2]
+      assert_equal Unit[nil, BackRef['x']], r[3]
     end
 
     it "parses expr" do
       r = parse :expr, 'a / &"b" / c'
       assert_equal 3, r.size
-      assert_equal RuleParser::Pred['&', RuleParser::Re['b'], nil], r[1]
+      assert_equal Pred['&', Re['b'], nil], r[1]
       assert_equal unit(nil, 'c'), r[2]
     end
 
@@ -62,7 +63,7 @@ module Magan
     end
 
     def unit var, id, quantifier=nil
-      RuleParser::Unit[var, RuleParser::Ref[id], quantifier]
+      Unit[var, Ref[id], quantifier]
     end
   end
-end
+end; end
