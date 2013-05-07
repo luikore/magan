@@ -177,19 +177,9 @@ module Magan
     end
 
     def parse_atom
-      @src.push
-
-      if expr = parse_paren
-        @src.drop
-        return expr
+      if r = (@src.try{parse_paren} || @src.try{parse_helper})
+        return r
       end
-      @src.restore
-
-      if helper = parse_helper
-        @src.drop
-        return helper
-      end
-      @src.pop
 
       if id = (@src.scan ID)
         return Ref[id]
@@ -248,13 +238,13 @@ module Magan
 
     def parse_block
       return unless @src.match_bytesize(/\{/)
-      s = @src.string[@src.pos..-1]
+      s = @src.rest
       res = FirstBlockStripper.new(s).parse
       if res.is_a?(String)
-        @src.pos += res.size + 2
+        @src.advance res.size + 2
         res
       else
-        @src.pos += res
+        @src.advance res
         false
       end
     end
