@@ -21,7 +21,7 @@ module Magan
       # note:
       #   for '?', the result is [r_] or []
       #   for '*' and '+', the result is r_
-      def generate ct, wrap=true
+      def generate ct
         if var
           assign =
             if var.end_with?('::')
@@ -36,13 +36,9 @@ module Magan
         end
 
         node_method = Node::QUANTIFIER_MAP[quantifier]
-        if atom.is_a?(Seq)
-          ct.add "(#{assign}Node.new.#{node_method}(@src){|;r_|\n"
-        else
-          ct.add "(#{assign}Node.new.#{node_method}(@src){\n"
-        end
+        ct.add "(#{assign}Node.new.#{node_method}(@src){\n"
         ct.push_indent
-        atom.generate ct, false
+        atom.generate ct
         ct.pop_indent
         ct.add "})\n"
       end

@@ -19,7 +19,7 @@ module Magan
       end
 
       # note: parser ensures that quantifier can never be '?' or '*'
-      def generate ct, wrap=true
+      def generate ct
         if literal?
           ct.add %Q|(@src.match_bytesize(%r"#{to_re}") && [])\n|
           return
@@ -27,13 +27,9 @@ module Magan
 
         if quantifier
           node_method = Node::QUANTIFIER_MAP[quantifier]
-          if atom.is_a?(Seq)
-            ct.add "(@src.push; Node.new.#{node_method}(@src){|;r_|\n"
-          else
-            ct.add "(@src.push; Node.new.#{node_method}(@src){\n"
-          end
+          ct.add "(@src.push; Node.new.#{node_method}(@src){\n"
           ct.push_indent
-          atom.generate ct, false
+          atom.generate ct
           ct.pop_indent
           ct.add "}.tap{ @src.pop } && [])\n"
         else

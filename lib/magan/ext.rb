@@ -27,7 +27,6 @@ module Magan
         end
       end
       code = ctx.join
-      # puts code
       class_eval code
     end
 

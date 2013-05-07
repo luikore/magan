@@ -27,35 +27,27 @@ module Magan
       TRY_OPEN = "@src.try{\n"
       TRY_CLOSE = "} ||\n"
 
-      def generate ct, wrap=true
+      def generate ct
         if literal?
           ct.add %Q|@src.scan(%r"#{to_re}")\n|
           return
         end
 
-        if wrap
-          ct.add WRAP_OPEN
-          ct.push_indent
-        end
+        ct.add WRAP_OPEN
+        ct.push_indent
 
         *es, last = self
         es.each do |e|
-          if e.is_a?(Seq)
-            ct.add "@src.try{|;r_|\n"
-          else
-            ct.add TRY_OPEN
-          end
+          ct.add TRY_OPEN
           ct.push_indent
-          e.generate ct, false
+          e.generate ct
           ct.pop_indent
           ct.add TRY_CLOSE
         end
         last.generate ct
 
-        if wrap
-          ct.pop_indent
-          ct.add WRAP_CLOSE
-        end
+        ct.pop_indent
+        ct.add WRAP_CLOSE
       end
     end
   end

@@ -56,7 +56,7 @@ module Magan
         []
       end
 
-      def generate ct, wrap=true
+      def generate ct
         "[]\n"
       end
     end
@@ -74,7 +74,7 @@ module Magan
         []
       end
 
-      def generate ct, wrap=true
+      def generate ct
         "nil\n"
       end
     end
@@ -92,7 +92,7 @@ module Magan
         []
       end
 
-      def generate ct, wrap=true
+      def generate ct
         ct.add %Q|@src.scan(%r"#{re}")\n|
       end
     end
@@ -107,7 +107,7 @@ module Magan
         []
       end
 
-      def generate ct, wrap=true
+      def generate ct
         ct.add "parse_#{id}()\n"
       end
     end
@@ -123,7 +123,7 @@ module Magan
         [var]
       end
 
-      def generate ct, wrap=true
+      def generate ct
         # todo
       end
     end
@@ -138,7 +138,7 @@ module Magan
         args.flat_map &:vars
       end
 
-      def generate ct, wrap=true
+      def generate ct
         # todo
       end
     end
@@ -165,7 +165,7 @@ module Magan
           end
         end
 
-        expr.generate ctx, false
+        expr.generate ctx
       end
     end
   end
