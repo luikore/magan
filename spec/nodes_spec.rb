@@ -3,7 +3,7 @@ require_relative "spec_helper"
 module Magan; module RuleNodes
   describe RuleNodes do
     def generate node
-      ct = CodeGenerateContext.new ''
+      ct = CodeGenContext.new ''
       node.generate ct
       ct.join
     end
@@ -52,7 +52,7 @@ module Magan; module RuleNodes
       @src = ZScan.new "baa"
       assert_equal ['b', ['a', 'a']], eval(code)
       @src = ZScan.new "abb"
-      assert_equal ['a', ['b', 'b']], eval(code)
+      assert_equal ['a', 'bb'], eval(code)
     end
 
     # stub for ref invoking

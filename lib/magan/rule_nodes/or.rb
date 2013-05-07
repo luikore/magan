@@ -22,10 +22,10 @@ module Magan
         flat_map &:vars
       end
 
-      WRAP_OPEN = "lambda {|;r_|\n"
-      WRAP_CLOSE = "}[]\n"
-      STACK_OPEN = "@src.push\n"
-      STACK_CLOSE = "@src.drop\nr_\n".lines
+      WRAP_OPEN = "(\n"
+      WRAP_CLOSE = ")\n"
+      TRY_OPEN = "@src.try{\n"
+      TRY_CLOSE = "} ||\n"
 
       def generate ct, wrap=true
         if literal?
@@ -38,26 +38,19 @@ module Magan
           ct.push_indent
         end
 
-        ct.add STACK_OPEN
-        before = "#{ct.indent}r_ =\n"
-        after = "#{ct.indent}if r_
-#{ct.indent}  @src.drop
-#{ct.indent}  return r_
-#{ct.indent}else
-#{ct.indent}  @src.restore
-#{ct.indent}end
-"
-        ct.push_indent
         *es, last = self
         es.each do |e|
-          ct << before
-          e.generate ct
-          ct << after
+          if e.is_a?(Seq)
+            ct.add "@src.try{|;r_|\n"
+          else
+            ct.add TRY_OPEN
+          end
+          ct.push_indent
+          e.generate ct, false
+          ct.pop_indent
+          ct.add TRY_CLOSE
         end
-        ct.pop_indent
-        last.generate ct, false
-
-        STACK_CLOSE.each{|line| ct.add line }
+        last.generate ct
 
         if wrap
           ct.pop_indent

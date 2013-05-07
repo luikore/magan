@@ -22,9 +22,8 @@ module Magan
         flat_map &:vars
       end
 
-      WRAP_OPEN = "lambda {|;r_, e_|\n"
+      WRAP_OPEN = "lambda {|;r_|\n"
       WRAP_CLOSE = "}[]\n"
-      INIT_R = "r_ = []\n"
 
       def generate ct, wrap=true
         if literal?
@@ -36,17 +35,16 @@ module Magan
           ct.add WRAP_OPEN
           ct.push_indent
         end
-        ct.add INIT_R
+        ct.add "r_ = Node.new\n"
+        ct.add "r_.add(\n"
 
-        before = "#{ct.indent}e_ =\n"
-        after = "#{ct.indent}return unless e_\n#{ct.indent}r_ << e_\n"
-        ct.push_indent
-        each do |e|
-          ct << before
-          e.generate ct
-          ct << after
+        *head, last = self
+        head.each do |e|
+          ct.child e
+          ct.add ") and r_.add(\n"
         end
-        ct.pop_indent
+        ct.child last
+        ct.add ")\n"
 
         if wrap
           ct.pop_indent

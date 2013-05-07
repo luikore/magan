@@ -25,25 +25,25 @@ module Magan; module RuleNodes
 
     it "parses seq" do
       r = parse :seq, 'a x:b+ $ \k<x>'
-      assert_equal unit(nil, 'a'), r[0]
+      assert_equal Ref['a'], r[0]
       assert_equal unit('x:', 'b', '+'), r[1]
       assert_equal Re['$'], r[2]
-      assert_equal Unit[nil, BackRef['x']], r[3]
+      assert_equal BackRef['x'], r[3]
     end
 
     it "parses expr" do
       r = parse :expr, 'a / &"b" / c'
       assert_equal 3, r.size
       assert_equal Pred['&', Re['b'], nil], r[1]
-      assert_equal unit(nil, 'c'), r[2]
+      assert_equal Ref['c'], r[2]
     end
 
     it "parses helper" do
       r = parse :helper, 'a[b, c]'
       assert_equal 'a', r.helper
       assert_equal 2, r.args.size
-      assert_equal unit(nil, 'b'), r.args[0]
-      assert_equal unit(nil, 'c'), r.args[1]
+      assert_equal Ref['b'], r.args[0]
+      assert_equal Ref['c'], r.args[1]
     end
 
     it "parses block" do

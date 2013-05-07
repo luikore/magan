@@ -24,34 +24,6 @@ module Magan
       end
     end
 
-    class CodeGenerateContext < Array
-      def initialize indent
-        @indent = indent
-        super()
-      end
-      attr_reader :indent
-
-      def push_indent
-        @indent += '  '
-      end
-
-      def pop_indent
-        @indent = @indent[0...-2]
-      end
-
-      def add line
-        # raise "bad line" unless line.end_with?("\n")
-        self << @indent << line
-      end
-
-      def child node
-        outer_indent = @indent
-        @indent += '  '
-        node.generate self
-        @indent = outer_indent
-      end
-    end
-
     QUANTIFIER_TO_RE = {
       '*' => '*+',
       '+' => '++',
@@ -173,9 +145,7 @@ module Magan
 
     Rule = S.new :name, :expr, :block
     class Rule
-      def generate
-        ctx = CodeGenerateContext.new '    '
-
+      def generate ctx
         vars = expr.vars
         vars.uniq!
         vars.map!{|v| [v[/^\w+/], v[/:+$/]] }
@@ -196,7 +166,6 @@ module Magan
         end
 
         expr.generate ctx, false
-        ctx.join
       end
     end
   end

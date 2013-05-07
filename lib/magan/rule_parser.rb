@@ -169,7 +169,11 @@ module Magan
         skip_space
         @src.scan QUANTIFIER
       }
-      Unit[var, atom, quantifier]
+      if var or quantifier
+        Unit[var, atom, quantifier]
+      else
+        atom
+      end
     end
 
     def parse_atom
