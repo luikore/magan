@@ -3,10 +3,10 @@ module Magan
     BLANK = ''.freeze
 
     QUANTIFIER_MAP = {
-      '?' => 'maybe',
-      '*' => 'star',
-      '+' => 'plus'
-    }
+      '?'.freeze => 'maybe'.freeze,
+      '*'.freeze => 'star'.freeze,
+      '+'.freeze => 'plus'.freeze
+    }.freeze
 
     def add e
       self << e if e
