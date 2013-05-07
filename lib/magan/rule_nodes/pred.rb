@@ -18,6 +18,10 @@ module Magan
         atom.vars
       end
 
+      BRACE_CLOSE = "}.tap{ @src.pop } && [])\n"
+      PAREN_OPEN  = "(@src.push;(\n"
+      PAREN_CLOSE = ").tap{ @src.pop } && [])\n"
+
       # note: parser ensures that quantifier can never be '?' or '*'
       def generate ct
         if literal?
@@ -31,11 +35,11 @@ module Magan
           ct.push_indent
           atom.generate ct
           ct.pop_indent
-          ct.add "}.tap{ @src.pop } && [])\n"
+          ct.add BRACE_CLOSE
         else
-          ct.add "(@src.push;(\n"
+          ct.add PAREN_OPEN
           ct.child atom
-          ct.add ").tap{ @src.pop } && [])\n"
+          ct.add PAREN_CLOSE
         end
       end
     end

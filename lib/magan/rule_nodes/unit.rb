@@ -18,9 +18,9 @@ module Magan
         r
       end
 
-      # note:
-      #   for '?', the result is [r_] or []
-      #   for '*' and '+', the result is r_
+      CLOSE = "})\n"
+
+      # note: result is array for ?, *, +
       def generate ct
         if var
           assign =
@@ -40,7 +40,7 @@ module Magan
         ct.push_indent
         atom.generate ct
         ct.pop_indent
-        ct.add "})\n"
+        ct.add CLOSE
       end
     end
   end

@@ -22,8 +22,9 @@ module Magan
         flat_map &:vars
       end
 
-      WRAP_OPEN = "(\n"
+      WRAP_OPEN  = "(\n"
       WRAP_CLOSE = ")\n"
+      LAST_CLOSE = ")\n"
 
       def generate ct
         if literal?
@@ -44,7 +45,7 @@ module Magan
           ct.add inter
         end
         ct.child last
-        ct.add ")\n"
+        ct.add LAST_CLOSE
 
         ct.free seq
         ct.pop_indent
