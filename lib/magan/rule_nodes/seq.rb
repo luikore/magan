@@ -39,7 +39,7 @@ module Magan
         ct.add "#{seq} = Node.new\n"
         ct.add "#{seq}.add(\n"
         *head, last = self
-        inter = ") && #{seq}.add(\n"
+        inter = ") and #{seq}.add(\n"
         head.each do |e|
           ct.child e
           ct.add inter

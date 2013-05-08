@@ -25,7 +25,7 @@ module Magan
       WRAP_OPEN = "(\n"
       WRAP_CLOSE = ")\n"
       TRY_OPEN = "@src.try{\n"
-      TRY_CLOSE = "} ||\n"
+      TRY_CLOSE = "} or\n"
 
       def generate ct
         if literal?
