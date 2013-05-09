@@ -2,12 +2,6 @@ require_relative "spec_helper"
 
 module Magan; module RuleNodes
   describe RuleNodes do
-    def generate node
-      ct = CodeGenContext.new ''
-      node.generate ct
-      ct.join
-    end
-
     it "parses ref unit" do
       unit = generate Unit[nil, Ref['a'], '*']
       @src = ZScan.new 'aa'
@@ -40,19 +34,34 @@ module Magan; module RuleNodes
       assert_equal [], eval(pred)
     end
 
-    it "parses hybrid rule_nodes" do
-      or1 = Or.new
-      seq1 = Seq.new
-      seq1 << Ref['a'] << Unit['x:', Re['b'], '*']
-      seq2 = Seq.new
-      seq2 << Re['b'] << Unit[nil, Ref['a'], '+']
-      or1 << seq1 << seq2
-      code = generate or1
+    it "parses hybrid expr" do
+      code = generate Or[
+        Seq[
+          Ref['a'],
+          Unit['x:', Re['b'], '*']
+        ],
+        Seq[
+          Re['b'],
+          Unit[nil, Ref['a'], '+']
+        ]
+      ]
 
       @src = ZScan.new "baa"
       assert_equal ['b', ['a', 'a']], eval(code)
       @src = ZScan.new "abb"
-      assert_equal ['a', 'bb'], eval(code)
+      assert_equal ['a', ['bb']], eval(code) # there's assignment so 'bb' is wrapped
+    end
+
+    it "parses rule" do
+      code = generate Rule['hello', Unit['x:', Re['hello'], nil], 'x.reverse']
+      @src = ZScan.new 'hello'
+      assert_equal 'hello'.reverse, eval(code).value
+    end
+
+    def generate node
+      ct = CodeGenContext.new ''
+      node.generate ct
+      ct.join
     end
 
     # stub for ref invoking
