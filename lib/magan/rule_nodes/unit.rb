@@ -32,7 +32,12 @@ module Magan
         end
 
         if atom.literal?
-          return ct.add %Q|(#{assign}@src.scan(%r"#{to_re}"))\n|
+          if assign
+            ct.add %Q|(#{assign}Node.new.add_value(@src.scan %r"#{to_re}"))\n|
+          else
+            Re[to_re].generate ct
+          end
+          return
         end
 
         node_method = Node::QUANTIFIER_MAP[quantifier]

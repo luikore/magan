@@ -157,15 +157,36 @@ module Magan
           raise "ambiguous var definition: #{ambig_var}, it should stick to one type"
         end
 
-        vars.each do |var|
-          if var.end_with?('::')
-            ctx.add "#{var[0...-2]} = []\n"
+        vars.each do |name, ty|
+          if ty == '::'
+            ctx.add "#{name} = []\n"
           else
-            ctx.add "#{var[0...-1]} = nil\n"
+            ctx.add "#{name} = nil\n"
           end
         end
 
+        if block
+          ctx.add "ast = ast_ = (\n"
+          ctx.push_indent
+        end
         expr.generate ctx
+        if block
+          ctx.pop_indent
+          ctx.add ")\n"
+          vars.each do |name, ty|
+            if ty == '::'
+              ctx.add "#{name}.map! &:value\n"
+            else
+              ctx.add "#{name} = #{name}.value if #{name}\n"
+            end
+          end
+          ctx.add "ast_.value = (\n"
+          ctx.push_indent
+          ctx.add_lines block
+          ctx.pop_indent
+          ctx.add ")\n"
+          ctx.add "ast_\n"
+        end
       end
     end
   end

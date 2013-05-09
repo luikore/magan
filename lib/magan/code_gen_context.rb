@@ -9,9 +9,10 @@ module Magan
     end
     attr_reader :indent
 
+    INDENT_INCR = '  '
     def push_indent
       @indents.push @indent
-      @indent += '  '
+      @indent += INDENT_INCR
     end
 
     def pop_indent
@@ -21,6 +22,13 @@ module Magan
     def add line
       # raise "bad line" unless line.end_with?("\n")
       self << @indent << line
+    end
+
+    NEW_LINE = "\n"
+    def add_lines code
+      code.lines.each do |l|
+        self << @indent << l.strip << NEW_LINE
+      end
     end
 
     def child node

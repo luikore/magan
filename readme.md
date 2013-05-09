@@ -178,10 +178,13 @@ Every rule allows at most one block transformer wrapped between `{` and `}`.
 
 To access environment in the block
 
-    @env.line
-    @env.col
-    @env.filename
-    TODO: other env information
+```ruby
+ast # the whole abstract syntax tree
+@src.filename
+@src.pos
+@src.line
+@src.col
+```
 
 You have the responsibility to ensure the transformers idempotent --- which means for a certain position in the source code, the processor should return the same result no matter how many times it is called, and the side effects should not accumulate.
 

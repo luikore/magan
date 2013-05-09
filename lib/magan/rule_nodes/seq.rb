@@ -28,7 +28,7 @@ module Magan
 
       def generate ct
         if literal?
-          ct.add %Q|@src.scan(%r"#{to_re}")\n|
+          Re[to_re].generate ct
           return
         end
 

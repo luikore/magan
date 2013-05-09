@@ -12,6 +12,13 @@ module Magan
       self << e if e
     end
 
+    def add_value e
+      if e
+        @value = e
+        self << e
+      end
+    end
+
     def maybe src
       src.push
       e = yield
@@ -56,5 +63,10 @@ module Magan
       end
       self
     end
+
+    def value
+      @value || self
+    end
+    attr_writer :value
   end
 end
