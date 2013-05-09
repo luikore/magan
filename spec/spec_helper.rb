@@ -40,16 +40,3 @@ RSpec.configure do |config|
     end
   end
 end
-
-class ExampleGrammar
-  include Magan
-  grammar %q|
-    expr = _ add _
-    int  = '-'? \d+
-    atom = '(' _ expr _ ')' / int
-    mul  = atom (_ [*/] _ atom)*
-    add  = mul (_ [+-] _ mul)*
-    _    = [\ \t]*
-  |
-  compile :expr
-end

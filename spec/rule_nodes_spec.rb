@@ -49,7 +49,7 @@ module Magan; module RuleNodes
       @src = ZScan.new "baa"
       assert_equal ['b', ['a', 'a']], eval(code)
       @src = ZScan.new "abb"
-      assert_equal ['a', ['bb']], eval(code) # there's assignment so 'bb' is wrapped
+      assert_equal ['a', 'bb'], eval(code)
     end
 
     it "parses rule" do

@@ -59,9 +59,10 @@ module Magan
         raise SyntaxError, "expect a rule at #{@src.pos}"
       end
       unless @src.eos?
-        puts (@src.string[0...(@src.pos)].inspect + ' <|> ' + @src.rest.inspect)
-        puts ''
-        raise SyntaxError, "syntax error at #{@src.pos}"
+        prev = @src.string[0...(@src.pos)].lines
+        line_prev = prev.last.inspect
+        line_rest = @src.rest.lines.first.inspect
+        raise SyntaxError, "bad grammar at line #{prev.size}:\n\t#{line_prev} <<HERE>> #{line_rest}"
       end
       @rules
     end

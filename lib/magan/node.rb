@@ -8,15 +8,14 @@ module Magan
       '+'.freeze => 'plus'.freeze
     }.freeze
 
+    def initialize
+      super
+      @value = self
+    end
+    attr_accessor :value
+
     def add e
       self << e if e
-    end
-
-    def add_value e
-      if e
-        @value = e
-        self << e
-      end
     end
 
     def maybe src
@@ -63,10 +62,5 @@ module Magan
       end
       self
     end
-
-    def value
-      @value || self
-    end
-    attr_writer :value
   end
 end

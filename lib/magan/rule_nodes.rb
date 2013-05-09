@@ -166,26 +166,33 @@ module Magan
         end
 
         if block
-          ctx.add "ast = ast_ = (\n"
+          ctx.add "if ast = ast_ = (\n"
           ctx.push_indent
         end
-        expr.generate ctx
+        if expr.literal?
+          ctx.add %Q|StringNode.new(@src.scan %r"#{expr.to_re}")\n|
+        else
+          expr.generate ctx
+        end
         if block
           ctx.pop_indent
           ctx.add ")\n"
-          vars.each do |name, ty|
-            if ty == '::'
-              ctx.add "#{name}.map! &:value\n"
-            else
-              ctx.add "#{name} = #{name}.value if #{name}\n"
+            ctx.push_indent
+            vars.each do |name, ty|
+              if ty == '::'
+                ctx.add "#{name}.map! &:value\n"
+              else
+                ctx.add "#{name} = #{name}.value if #{name}\n"
+              end
             end
-          end
-          ctx.add "ast_.value = (\n"
-          ctx.push_indent
-          ctx.add_lines block
-          ctx.pop_indent
-          ctx.add ")\n"
-          ctx.add "ast_\n"
+            ctx.add "ast_.value = (\n"
+              ctx.push_indent
+              ctx.add_lines block
+              ctx.pop_indent
+            ctx.add ")\n"
+            ctx.add "ast_\n"
+            ctx.pop_indent
+          ctx.add "end\n"
         end
       end
     end

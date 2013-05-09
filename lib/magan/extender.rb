@@ -1,6 +1,6 @@
 module Magan
   # module for extend
-  module Ext
+  module Extender
     attr_reader :rules, :entrance
 
     def grammar grammar_src

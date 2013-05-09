@@ -18,7 +18,9 @@ module Magan
         r
       end
 
-      CLOSE = "})\n"
+      CLOSE               = "})\n"
+      NO_QUANTIFIER_OPEN  = "(\n"
+      NO_QUANTIFIER_CLOSE = ")\n"
 
       # note: result is array for ?, *, +
       def generate ct
@@ -33,10 +35,18 @@ module Magan
 
         if atom.literal?
           if assign
-            ct.add %Q|(#{assign}Node.new.add_value(@src.scan %r"#{to_re}"))\n|
+            ct.add %Q|(#{assign}StringNode.new(@src.scan %r"#{to_re}"))\n|
           else
             Re[to_re].generate ct
           end
+          return
+        end
+
+        unless quantifier
+          # raise 'unexpected unit with no var no quantifier' unless assign
+          ct.add "#{assign}(\n"
+          ct.child atom
+          ct.add ")\n"
           return
         end
 
