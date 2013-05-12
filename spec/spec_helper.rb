@@ -40,3 +40,12 @@ RSpec.configure do |config|
     end
   end
 end
+
+# add line number
+def nl src
+  IO.popen("nl -b a", 'r+'){|f|
+    f << src
+    f.close_write
+    f.read
+  }
+end
