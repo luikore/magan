@@ -152,45 +152,67 @@ module Magan
     class DefinitionError < RuntimeError
     end
 
-    Rule = S.new :name, :expr, :block, :vars
+    Rule = S.new :name, :expr, :block, :vars, :line_index, :block_line_index
     class Rule
-      def generate ctx
+      def generate ct
         if block or !vars.empty?
-          ctx.add "vars = Vars.new\n"
+          ct.add "vars = Vars.new\n"
         end
 
         if block
           vars.each do |name, ty|
             if ty == '::'
-              ctx.add "vars[:#{name}] = []\n"
+              ct.add "vars[:#{name}] = []\n"
             end
           end
-          vars_list = vars.map{|var, _| ", #{var}"}.join
-          vars_aref_list = vars.map{|var, _| ", vars[:#{var}]"}.join
-
-          ctx.add "if ast = (\n"
-          ctx.push_indent
+          ct.add "if ast = (\n"
+          ct.push_indent
         end
         if expr.literal?
-          ctx.add %Q|StringNode.new(@src.scan %r"#{expr.to_re}")\n|
+          ct.add %Q|StringNode.new(@src.scan %r"#{expr.to_re}")\n|
         else
-          expr.generate ctx
+          expr.generate ct
         end
         if block
-          ctx.pop_indent
-          ctx.add ")\n"
-            ctx.push_indent
-            unless ctx.seq_used.empty?
-              locals = ";#{ctx.seq_used.join ', '}"
+          ct.pop_indent
+          ct.add ")\n"
+            ct.push_indent
+            if vars.empty?
+              ct.add "ast.value = exec_#{name} ast\n"
+            else
+              ct.add "ast.value = exec_#{name} ast, vars\n"
             end
-            ctx.add "ast.value = lambda{|ast#{vars_list}#{locals}|\n"
-              ctx.push_indent
-              ctx.add_lines block
-              ctx.pop_indent
-            ctx.add "}[ast#{vars_aref_list}]\n"
-            ctx.add "ast\n"
-            ctx.pop_indent
-          ctx.add "end\n"
+            ct.add "ast\n"
+            ct.pop_indent
+          ct.add "end\n"
+        end
+      end
+
+      def generate_parse ct, trace=false
+        ct.add "def parse_#{name}\n"
+        ct.add "  print %Q|#{name}: \#{@src.pos}: |\n" if trace
+        ct.child self
+        ct.add "  .tap{|o| p o}\n" if trace
+        ct.add "end\n\n"
+      end
+
+      # if ct == nil, return a string
+      def generate_exec ct
+        return nil unless block
+
+        unless vars.empty?
+          vars_aref_list = vars.map{|var, ty| ", #{var}: #{ty == '::' ? '[]' : 'nil'}"}.join
+        end
+        sig = "def exec_#{name} ast#{vars_aref_list}\n"
+
+        if ct
+          ct.add sig
+          ct.push_indent
+          ct.add_lines block
+          ct.pop_indent
+          ct.add "end\n\n"
+        else
+          sig << block << "\nend"
         end
       end
     end

@@ -74,6 +74,7 @@ module Magan
     end
 
     def parse_rule
+      line_index = @src.line_index
       id = @src.scan RULE_ID
       return unless id
       skip_space
@@ -81,8 +82,10 @@ module Magan
       skip_space
       expr = parse_expr
       return unless expr
+      block_line_index = nil
       block = maybe{
         skip_space
+        block_line_index = @src.line_index
         parse_block
       }
 
@@ -104,7 +107,7 @@ module Magan
         raise DefinitionError, "ambiguous var definition: #{ambig_var}, it should stick to one type"
       end
 
-      rule = Rule[id, expr, block, vars]
+      rule = Rule[id, expr, block, vars, line_index, block_line_index]
       rules[id] = rule
       rule
     end

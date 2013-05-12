@@ -5,14 +5,14 @@ module Magan
     it "evals arithmetic" do
       class Arithmetic
         include Magan
-        grammar %q<
+        grammar <<-RUBY, __FILE__, __LINE__
           expr = _ v:add _ { v }
-          int  = '-'? \d+  { ast.value.to_i }
+          int  = '-'? \\d+  { ast.value.to_i }
           atom = '(' _ v:expr _ ')' / v:int { v }
           mul  = x:atom (_ ops::[*/] _ xs::atom)* { calculate x, ops, xs }
           add  = x:mul  (_ ops::[+-] _ xs::mul)*  { calculate x, ops, xs }
-          _    = [\ \t]*
-        >
+          _    = [\\ \\t]*
+        RUBY
         # puts nl generate_code :expr
         compile :expr
 

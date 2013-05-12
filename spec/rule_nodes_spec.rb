@@ -71,5 +71,10 @@ module Magan; module RuleNodes
     def parse_a
       @src.scan /a/
     end
+
+    # stub for exec
+    def exec_hello ast, x: nil
+      x.reverse
+    end
   end
 end; end
