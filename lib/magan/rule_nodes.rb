@@ -1,11 +1,5 @@
 module Magan
   module RuleNodes
-    QUANTIFIER_ZSCAN_MAP = {
-      '?'.freeze => 'zero_or_one'.freeze,
-      '*'.freeze => 'zero_or_more'.freeze,
-      '+'.freeze => 'one_or_more'.freeze
-    }.freeze
-
     class S < Struct
       def inspect
         pretty_inspect # may not defined yet, don't alias
@@ -48,6 +42,12 @@ module Magan
       '<&' => '<=',
       '<!' => '<!'
     }
+
+    QUANTIFIER_TO_ZSCAN = {
+      '?'.freeze => 'zero_or_one'.freeze,
+      '*'.freeze => 'zero_or_more'.freeze,
+      '+'.freeze => 'one_or_more'.freeze
+    }.freeze
 
     class Success
       def literal?
@@ -149,18 +149,25 @@ module Magan
       end
     end
 
+    class DefinitionError < RuntimeError
+    end
+
     Rule = S.new :name, :expr, :block
     class Rule
       def generate ctx
         vars = expr.vars
-        vars.uniq!
         vars.map!{|v| [v[/^\w+/], v[/:+$/]] }
+        if repeated_agg_vars = vars.select{|v| v.last == '::'}.uniq!
+          raise DefinitionError, "repeated aggregate vars: #{repeated_agg_vars.join ' '}"
+        end
+
+        vars.uniq!
         var_group = vars.group_by(&:first)
         ambig_var, _ = var_group.find do |_, vs|
           vs.size > 1
         end
         if ambig_var
-          raise "ambiguous var definition: #{ambig_var}, it should stick to one type"
+          raise DefinitionError, "ambiguous var definition: #{ambig_var}, it should stick to one type"
         end
 
         vars.each do |name, ty|

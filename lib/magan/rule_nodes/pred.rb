@@ -30,7 +30,7 @@ module Magan
         end
 
         if quantifier
-          zscan_method = QUANTIFIER_ZSCAN_MAP[quantifier]
+          zscan_method = QUANTIFIER_TO_ZSCAN[quantifier]
           ct.add "(@src.push; @src.#{zscan_method}(Node.new){\n"
           ct.push_indent
           atom.generate ct
