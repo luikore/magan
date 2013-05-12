@@ -152,24 +152,9 @@ module Magan
     class DefinitionError < RuntimeError
     end
 
-    Rule = S.new :name, :expr, :block
+    Rule = S.new :name, :expr, :block, :vars
     class Rule
       def generate ctx
-        vars = expr.vars
-        vars.map!{|v| [v[/^\w+/], v[/:+$/]] }
-        if repeated_agg_vars = vars.select{|v| v.last == '::'}.uniq!
-          raise DefinitionError, "repeated aggregate vars: #{repeated_agg_vars.join ' '}"
-        end
-
-        vars.uniq!
-        var_group = vars.group_by(&:first)
-        ambig_var, _ = var_group.find do |_, vs|
-          vs.size > 1
-        end
-        if ambig_var
-          raise DefinitionError, "ambiguous var definition: #{ambig_var}, it should stick to one type"
-        end
-
         if block or !vars.empty?
           ctx.add "vars = Vars.new\n"
         end
@@ -195,7 +180,9 @@ module Magan
           ctx.pop_indent
           ctx.add ")\n"
             ctx.push_indent
-            locals = "" # todo analyse
+            unless ctx.seq_used.empty?
+              locals = ";#{ctx.seq_used.join ', '}"
+            end
             ctx.add "ast.value = lambda{|ast#{vars_list}#{locals}|\n"
               ctx.push_indent
               ctx.add_lines block

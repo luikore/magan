@@ -58,6 +58,20 @@ module Magan; module RuleNodes
       assert_equal 'x.reverse', r.rules['a'].block.strip
     end
 
+    it "detects ambiguous var type" do
+      p = RuleParser.new %Q{a = x:"a" x::"b"}
+      assert_raise RuleParser::DefinitionError do
+        p.parse
+      end
+    end
+
+    it "detects recurrence of aggregate var" do
+      p = RuleParser.new %Q{a = x::"a" x::"b"}
+      assert_raise RuleParser::DefinitionError do
+        p.parse
+      end
+    end
+
     def parse meth, s
       RuleParser.new(s).send("parse_#{meth}")
     end

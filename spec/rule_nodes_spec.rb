@@ -56,7 +56,7 @@ module Magan; module RuleNodes
     end
 
     it "parses rule" do
-      code = generate Rule['hello', Unit['x:', Re['hello'], nil], 'x.reverse']
+      code = generate Rule['hello', Unit['x:', Re['hello'], nil], 'x.reverse', [['x', ':']]]
       @src = ZScan.new 'hello'
       assert_equal 'hello'.reverse, eval(code).value
     end
