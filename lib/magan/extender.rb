@@ -3,15 +3,17 @@ module Magan
   module Extender
     attr_reader :rules, :entrance
 
-    def grammar grammar_src, file='grammar', start_line=0
+    def grammar grammar_src, file=nil, start_line=nil
       raise 'need a class' unless is_a?(Class)
       @rules = RuleParser.new(grammar_src).parse
       @generated = {}
       @rules.each do |name, _|
         @generated[name] = false
       end
-      @file = file
-      @start_line = start_line
+
+      f = caller_locations.first
+      @file = file || f.path
+      @start_line = start_line || f.lineno
     end
 
     def generate_code entrance=:main, trace: false, incremental: false
@@ -22,13 +24,13 @@ module Magan
       @generated.to_a.each do |(name, generated)|
         if !(incremental and generated)
           rule = @rules[name]
-          ct.add "# file: #{@file}, line: #{@start_line + rule.line_index + 1}\n"
+          ct.add "# #{@file}:#{@start_line + rule.line_index + 1}\n" unless incremental
           rule.generate_parse ct, trace
           if incremental
             @generated[name] = true
           elsif rule.block
             if rule.block_line_index
-              ct.add "# file: #{@file}, line: #{@start_line + rule.block_line_index + 1}\n"
+              ct.add "# #{@file}:#{@start_line + rule.block_line_index + 1}\n" unless incremental
             end
             rule.generate_exec ct
           end
