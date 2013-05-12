@@ -12,22 +12,27 @@ module Magan
       end
     end
 
-    def compile entrance=:main
+    def generate_code entrance=:main, trace: false, memoise: false, force: false
       @entrance = entrance.to_s[/(?!\d)\w+/]
       raise "invalid entrance: #{entrance.inspect}, should be a rule name" unless @entrance
 
       # update only changed ones
-      ctx = CodeGenContext.new '  '
+      ct = CodeGenContext.new '  '
       @generated.to_a.each do |(name, generated)|
-        unless generated
-          ctx.add "def parse_#{name}\n"
-          ctx.child @rules[name]
-          ctx.add "end\n\n"
-          @generated[name] = true
+        if force or !generated
+          ct.add "def parse_#{name}\n"
+          ct.add "  print %Q|#{name}: \#{@src.pos}: |\n" if trace
+          ct.child @rules[name]
+          ct.add "  .tap{|o| p o}\n" if trace
+          ct.add "end\n\n"
+          @generated[name] = true if memoise
         end
       end
-      code = ctx.join
-      class_eval code
+      ct.join
+    end
+
+    def compile entrance=:main
+      class_eval generate_code(entrance, memoise: true)
     end
 
     def helper
