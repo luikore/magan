@@ -76,15 +76,17 @@ Capture variables are defined before a unit expression, and are used in blocks o
 
 Normal captures
 
-    var:rule1 var:rule2
+    var:expr1 var:expr2
 
-In the above code, since two rules sharing the same capture variable, the capture of `rule2` just replaces the capture of `rule1`.
+In the above code, since two expressions share the same capture variable, the capture of `rule2` just replaces the capture of `rule1`.
 
 ### Aggregate variable
 
-Aggregate variables are put inside an array for repeated captures. For example
+Aggregate variables means the capture is put inside an array. For example, to collect repeated captures:
 
     (aggregate_var::rule1 rule2)*
+
+Due to implementation reason, aggregate var of the same name is not allowed to appear more than once in a rule.
 
 ## References
 

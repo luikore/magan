@@ -12,7 +12,7 @@ module Magan
       end
     end
 
-    it "detects recurrence aggregate var" do
+    it "detects recurrence of aggregate var" do
       p = RuleParser.new %Q{a = x::"a" x::"b"}
       p.parse
       rule = p.rules['a']
