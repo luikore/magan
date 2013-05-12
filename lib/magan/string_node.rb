@@ -7,9 +7,6 @@ module Magan
       end
     end
 
-    def value= v
-      @value = v
-    end
-    attr_reader :value
+    attr_accessor :value
   end
 end
