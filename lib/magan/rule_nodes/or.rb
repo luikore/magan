@@ -22,10 +22,10 @@ module Magan
         flat_map &:vars
       end
 
-      WRAP_OPEN = "(\n"
-      WRAP_CLOSE = ")\n"
+      FIRST_OPEN = "(@src.try{\n"
       TRY_OPEN = "@src.try{\n"
       TRY_CLOSE = "} or\n"
+      LAST_CLOSE = ")\n"
 
       def generate ct
         if literal?
@@ -33,21 +33,17 @@ module Magan
           return
         end
 
-        ct.add WRAP_OPEN
-        ct.push_indent
-
-        *es, last = self
+        first, *es, last = self
+        ct.add FIRST_OPEN
+        ct.child first
+        ct.add TRY_CLOSE
         es.each do |e|
           ct.add TRY_OPEN
-          ct.push_indent
-          e.generate ct
-          ct.pop_indent
+          ct.child e
           ct.add TRY_CLOSE
         end
-        last.generate ct
-
-        ct.pop_indent
-        ct.add WRAP_CLOSE
+        ct.child last
+        ct.add LAST_CLOSE
       end
     end
   end

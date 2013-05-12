@@ -12,6 +12,7 @@ describe Magan do
         add  = x:mul  (_ ops::[+-] _ xs::mul)*  { calculate x, ops, xs }
         _    = [\ \t]*
       >
+      # puts nl generate_code :expr
       compile :expr
 
       def calculate x, ops, xs

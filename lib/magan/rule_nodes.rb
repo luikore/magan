@@ -1,5 +1,11 @@
 module Magan
   module RuleNodes
+    QUANTIFIER_ZSCAN_MAP = {
+      '?'.freeze => 'zero_or_one'.freeze,
+      '*'.freeze => 'zero_or_more'.freeze,
+      '+'.freeze => 'one_or_more'.freeze
+    }.freeze
+
     class S < Struct
       def inspect
         pretty_inspect # may not defined yet, don't alias
@@ -180,6 +186,7 @@ module Magan
             ctx.push_indent
             vars.each do |name, ty|
               if ty == '::'
+                ctx.add "#{name}.compact!\n"
                 ctx.add "#{name}.map! &:value\n"
               else
                 ctx.add "#{name} = #{name}.value if #{name}\n"

@@ -30,8 +30,8 @@ module Magan
         end
 
         if quantifier
-          node_method = Node::QUANTIFIER_MAP[quantifier]
-          ct.add "(@src.push; Node.new.#{node_method}(@src){\n"
+          zscan_method = QUANTIFIER_ZSCAN_MAP[quantifier]
+          ct.add "(@src.push; @src.#{zscan_method}(Node.new){\n"
           ct.push_indent
           atom.generate ct
           ct.pop_indent
