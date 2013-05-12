@@ -18,44 +18,38 @@ module Magan
         r
       end
 
-      CLOSE               = "})\n"
-      NO_QUANTIFIER_OPEN  = "(\n"
-      NO_QUANTIFIER_CLOSE = ")\n"
-
       # note: result is array for ?, *, +
       def generate ct
         if var
           assign =
             if var.end_with?('::')
-              "#{var[0...-2]} << "
+              "vars.add(:#{var[0...-2]}, "
             else
-              "#{var[0...-1]} = "
+              "vars.assign(:#{var[0...-1]}, "
             end
+          assign_end = ")"
         end
 
         if atom.literal?
           if assign
-            ct.add %Q|(#{assign}StringNode.new(@src.scan %r"#{to_re}"))\n|
+            ct.add %Q<#{assign}(StringNode.new @src.scan %r"#{to_re}")#{assign_end}\n>
           else
             Re[to_re].generate ct
           end
           return
         end
 
-        unless quantifier
+        if quantifier
+          zscan_method = QUANTIFIER_TO_ZSCAN[quantifier]
+          ct.add "#{assign}@src.#{zscan_method}(Node.new){\n"
+          ct.child atom
+          ct.add "}#{assign_end}\n"
+        else
           # raise 'unexpected unit with no var no quantifier' unless assign
           ct.add "#{assign}(\n"
           ct.child atom
-          ct.add ")\n"
-          return
+          ct.add ")#{assign_end}\n"
         end
-
-        zscan_method = QUANTIFIER_TO_ZSCAN[quantifier]
-        ct.add "(#{assign}@src.#{zscan_method}(Node.new){\n"
-        ct.push_indent
-        atom.generate ct
-        ct.pop_indent
-        ct.add CLOSE
       end
     end
   end

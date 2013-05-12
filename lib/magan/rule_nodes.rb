@@ -170,16 +170,20 @@ module Magan
           raise DefinitionError, "ambiguous var definition: #{ambig_var}, it should stick to one type"
         end
 
-        vars.each do |name, ty|
-          if ty == '::'
-            ctx.add "#{name} = []\n"
-          else
-            ctx.add "#{name} = nil\n"
-          end
+        if block or !vars.empty?
+          ctx.add "vars = Vars.new\n"
         end
 
         if block
-          ctx.add "if ast = ast_ = (\n"
+          vars.each do |name, ty|
+            if ty == '::'
+              ctx.add "vars[:#{name}] = []\n"
+            end
+          end
+          vars_list = vars.map{|var, _| ", #{var}"}.join
+          vars_aref_list = vars.map{|var, _| ", vars[:#{var}]"}.join
+
+          ctx.add "if ast = (\n"
           ctx.push_indent
         end
         if expr.literal?
@@ -191,20 +195,13 @@ module Magan
           ctx.pop_indent
           ctx.add ")\n"
             ctx.push_indent
-            vars.each do |name, ty|
-              if ty == '::'
-                ctx.add "#{name}.compact!\n"
-                ctx.add "#{name}.map! &:value\n"
-              else
-                ctx.add "#{name} = #{name}.value if #{name}\n"
-              end
-            end
-            ctx.add "ast_.value = (\n"
+            locals = "" # todo analyse
+            ctx.add "ast.value = lambda{|ast#{vars_list}#{locals}|\n"
               ctx.push_indent
               ctx.add_lines block
               ctx.pop_indent
-            ctx.add ")\n"
-            ctx.add "ast_\n"
+            ctx.add "}[ast#{vars_aref_list}]\n"
+            ctx.add "ast\n"
             ctx.pop_indent
           ctx.add "end\n"
         end
