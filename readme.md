@@ -86,8 +86,6 @@ Aggregate variables means the capture is put inside an array. For example, to co
 
     (aggregate_var::rule1 rule2)*
 
-Due to implementation reason, aggregate var of the same name is not allowed to appear more than once in a rule.
-
 ## References
 
 ### Reference to rule

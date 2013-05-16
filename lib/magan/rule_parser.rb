@@ -95,9 +95,6 @@ module Magan
 
       vars = expr.vars
       vars.map!{|v| [v[/^\w+/], v[/:+$/]] }
-      if repeated_agg_vars = vars.select{|v| v.last == '::'}.uniq!
-        raise DefinitionError, "repeated aggregate vars: #{repeated_agg_vars.join ' '}"
-      end
       vars.uniq!
       var_group = vars.group_by(&:first)
       ambig_var, _ = var_group.find do |_, vs|
