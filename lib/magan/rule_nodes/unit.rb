@@ -41,9 +41,14 @@ module Magan
 
         if quantifier
           zscan_method = QUANTIFIER_TO_ZSCAN[quantifier]
-          ct.add "#{assign}@src.#{zscan_method}(Node.new){\n"
+          atom_vars = atom.vars
+          unless atom_vars.empty?
+            vars_try_beg = "vars.try(#{Vars.init_add_values_s atom_vars}){"
+            vars_try_end = '}'
+          end
+          ct.add "#{assign}@src.#{zscan_method}(Node.new){#{vars_try_beg}\n"
           ct.child atom
-          ct.add "}#{assign_end}\n"
+          ct.add "#{vars_try_end}}#{assign_end}\n"
         else
           # raise 'unexpected unit with no var no quantifier' unless assign
           ct.add "#{assign}(\n"

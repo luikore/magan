@@ -206,27 +206,6 @@ The following rule parses either `'a'` or `'A'`:
 
 The only argument of `i[]` must be a literal.
 
-### Joiner
-
-    join[token, joiner]
-
-This rule is equivalent to
-
-    token (joiner token)*
-
-Doesn't look a big improvement huh? But sometimes the first expression can be quite long, repeating it would easily lead to errors, and it's hard to think of the name if you abstract the meaningless partial expression into a new rule. Then `join[]` will help you. For example, you can easily write
-
-    x = join[a / b / c / d / e, ',']
-
-than
-
-    x = a / b / c / d / e (',' (a / b / c / d / e))*
-
-or
-
-    x  = x1 (',' x1)*
-    x1 = a / b / c / d / e
-
 ### Permutations
 
 Assume you want to parse arbitrary non-recurring permutations of `a`, `b` and `c`, you may write a very complex rule like this:
@@ -235,7 +214,7 @@ Assume you want to parse arbitrary non-recurring permutations of `a`, `b` and `c
 
 These surely will explode if you add one more reference `d`! Or you may give up and use a simpler rule and a block to reject the repeated ones?
 
-    x:(a / b / c)+ { reject if x.uniq != x; x }
+    x:(a / b / c)+ { throw :reject if x.uniq != x; x }
 
 Or you can just use the `permutations[]` macro for the dirty job:
 
@@ -245,13 +224,25 @@ It's very handy for parsing weird syntaces like Java method modifiers `synchroni
 
 ### Indentations
 
-Indentations are hard to fit in PEG syntax, luckily we have helpers for the job:
+Indentations are hard to fit in PEG syntax (they can not be cached, and a rule starting with indent / dedent / samedent can neither be cached). With the assumption that a rule not starting with indents is not affect by indent rules, we have helpers for this job:
 
     indent[]
     dedent[]
     samedent[]
 
 TODO: explain details and other indentation helpers
+
+### Scanf
+
+Similar to [scanf](), the AST is a string node and the paresd value is converted.
+
+    scanf['the address %x stores the floating number %f']
+
+### Binary parsing
+
+Similar to [unpack](), the AST is a string node and the parsed value is converted.
+
+    unpack['qqI']
 
 ### Custom helpers
 

@@ -24,7 +24,15 @@ module Magan
       end
     end
 
-    QUANTIFIER_TO_RE = {
+    def self.freeze_hash hash
+      hash.each do |k, v|
+        k.freeze
+        v.freeze
+      end
+      hash.freeze
+    end
+
+    QUANTIFIER_TO_RE = freeze_hash\
       '*' => '*+',
       '+' => '++',
       '?' => '?+',
@@ -34,20 +42,17 @@ module Magan
       '*?' => '*?',
       '+?' => '+?',
       '??' => '??'
-    }
 
-    PRED_TO_RE = {
+    PRED_TO_RE = freeze_hash\
       '&' => '=',
       '!' => '!',
       '<&' => '<=',
       '<!' => '<!'
-    }
 
-    QUANTIFIER_TO_ZSCAN = {
-      '?'.freeze => 'zero_or_one'.freeze,
-      '*'.freeze => 'zero_or_more'.freeze,
-      '+'.freeze => 'one_or_more'.freeze
-    }.freeze
+    QUANTIFIER_TO_ZSCAN = freeze_hash\
+      '?' => 'zero_or_one',
+      '*' => 'zero_or_more',
+      '+' => 'one_or_more'
 
     class Success
       def literal?
@@ -145,6 +150,14 @@ module Magan
       end
 
       def generate ct
+        # some_helper.call @src, ->{
+        #   arg1
+        # }, ->{
+        #   arg2
+        # }, ...
+        # some_helper = -> src, p1, p2, ...{
+        #   @indent = src.scan
+        # }
         # todo
       end
     end
@@ -156,23 +169,20 @@ module Magan
     class Rule
       def generate ct
         if block or !vars.empty?
-          ct.add "vars = Vars.new\n"
+          ct.add "vars = Vars.new #{Vars.init_add_values_s expr.vars}\n"
         end
 
         if block
-          vars.each do |name, ty|
-            if ty == '::'
-              ct.add "vars[:#{name}] = []\n"
-            end
-          end
           ct.add "if ast = (\n"
           ct.push_indent
         end
+
         if expr.literal?
           ct.add %Q|StringNode.new(@src.scan %r"#{expr.to_re}")\n|
         else
           expr.generate ct
         end
+
         if block
           ct.pop_indent
           ct.add ")\n"
@@ -180,7 +190,7 @@ module Magan
             if vars.empty?
               ct.add "ast.value = exec_#{name} ast\n"
             else
-              ct.add "ast.value = exec_#{name} ast, vars\n"
+              ct.add "ast.value = exec_#{name} ast, vars.first\n"
             end
             ct.add "ast\n"
             ct.pop_indent

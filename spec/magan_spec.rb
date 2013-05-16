@@ -7,14 +7,14 @@ module Magan
         include Magan
         grammar %q<
           expr = _ v:add _ { v }
-          int  = '-'? \\d+  { ast.value.to_i }
+          int  = '-'? \d+  { ast.value.to_i }
           atom = '(' _ v:expr _ ')' / v:int { v }
           mul  = x:atom (_ ops::[*/] _ xs::atom)*
                  { calculate x, ops, xs }
           add  = x:mul  (_ ops::[+-] _ xs::mul)*  { calculate x, ops, xs }
-          _    = [\\ \\t]*
+          _    = [\ \t]*
         >
-        puts nl generate_code :expr
+        # puts nl generate_code :expr
         compile :expr
 
         def calculate x, ops, xs

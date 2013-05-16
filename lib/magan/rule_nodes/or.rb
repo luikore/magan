@@ -34,13 +34,27 @@ module Magan
         end
 
         first, *es, last = self
-        ct.add FIRST_OPEN
-        ct.child first
-        ct.add TRY_CLOSE
-        es.each do |e|
-          ct.add TRY_OPEN
-          ct.child e
+        first_vars = first.vars
+        if first_vars.empty?
+          ct.add FIRST_OPEN
+          ct.child first
           ct.add TRY_CLOSE
+        else
+          ct.add "(vars.try(#{Vars.init_add_values_s first_vars}){@src.try{\n"
+          ct.child first
+          ct.add "}} or\n"
+        end
+        es.each do |e|
+          e_vars = e.vars
+          if e_vars.empty?
+            ct.add TRY_OPEN
+            ct.child e
+            ct.add TRY_CLOSE
+          else
+            ct.add "vars.try(#{Vars.init_add_values_s e_vars}){@src.try{\n"
+            ct.child e
+            ct.add "}} or\n"
+          end
         end
         ct.child last
         ct.add LAST_CLOSE
