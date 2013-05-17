@@ -169,7 +169,7 @@ module Magan
     class Rule
       def generate ct
         if block or !vars.empty?
-          ct.add "vars = Vars.new #{Vars.init_add_values_s expr.vars}\n"
+          ct.add "captures = Captures.new #{Captures.init_add_values_s expr.vars}\n"
         end
 
         if block
@@ -190,7 +190,7 @@ module Magan
             if vars.empty?
               ct.add "ast.value = exec_#{name} ast\n"
             else
-              ct.add "ast.value = exec_#{name} ast, vars.first\n"
+              ct.add "ast.value = exec_#{name} ast, captures.first\n"
             end
             ct.add "ast\n"
             ct.pop_indent

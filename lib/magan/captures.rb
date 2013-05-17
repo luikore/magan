@@ -1,5 +1,5 @@
 module Magan
-  class Vars < Array
+  class Captures < Array
     # create init_hash string
     def self.init_add_values_s vars
       a = []

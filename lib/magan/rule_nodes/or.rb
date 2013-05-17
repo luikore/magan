@@ -40,7 +40,7 @@ module Magan
           ct.child first
           ct.add TRY_CLOSE
         else
-          ct.add "(vars.try(#{Vars.init_add_values_s first_vars}){@src.try{\n"
+          ct.add "(captures.try(#{Captures.init_add_values_s first_vars}){@src.try{\n"
           ct.child first
           ct.add "}} or\n"
         end
@@ -51,7 +51,7 @@ module Magan
             ct.child e
             ct.add TRY_CLOSE
           else
-            ct.add "vars.try(#{Vars.init_add_values_s e_vars}){@src.try{\n"
+            ct.add "captures.try(#{Captures.init_add_values_s e_vars}){@src.try{\n"
             ct.child e
             ct.add "}} or\n"
           end

@@ -23,9 +23,9 @@ module Magan
         if var
           assign =
             if var.end_with?('::')
-              "vars.add(:#{var[0...-2]}, "
+              "captures.add(:#{var[0...-2]}, "
             else
-              "vars.assign(:#{var[0...-1]}, "
+              "captures.assign(:#{var[0...-1]}, "
             end
           assign_end = ")"
         end
@@ -43,7 +43,7 @@ module Magan
           zscan_method = QUANTIFIER_TO_ZSCAN[quantifier]
           atom_vars = atom.vars
           unless atom_vars.empty?
-            vars_try_beg = "vars.try(#{Vars.init_add_values_s atom_vars}){"
+            vars_try_beg = "captures.try(#{Captures.init_add_values_s atom_vars}){"
             vars_try_end = '}'
           end
           ct.add "#{assign}@src.#{zscan_method}(Node.new){#{vars_try_beg}\n"

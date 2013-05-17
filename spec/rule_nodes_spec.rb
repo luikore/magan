@@ -47,11 +47,11 @@ module Magan; module RuleNodes
       ]
 
       @src = ZScan.new "baa"
-      vars = Vars.new
+      captures = Captures.new
       assert_equal ['b', ['a', 'a']], eval(code)
 
       @src = ZScan.new "abb"
-      vars = Vars.new
+      captures = Captures.new
       assert_equal ['a', 'bb'], eval(code)
     end
 

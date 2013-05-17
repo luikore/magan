@@ -12,7 +12,7 @@ require_relative "magan/extender"
 require_relative "magan/code_gen_context"
 require_relative "magan/node"
 require_relative "magan/string_node"
-require_relative "magan/vars"
+require_relative "magan/captures"
 
 module Magan
   VERSION = '0.1'
