@@ -1,9 +1,12 @@
 module Magan
-  # depth computation (see also code_gen_context.rb)
+  # depth computation (see also rule_nodes.rb)
   #   default = 0
-  #   at every try(), depth += 1
+  #   before every try(), depth += 1
+  #   after try(), depth -= 1
   #   max_depth is computed by iterating nodes of or/?/*/+
-  #   assign / acc index = depth * vars_size + var_id
+  #
+  # var_id used in assign / acc:
+  #   depth * vars_size + var_id
   class Captures < Array
     def initialize vars_size, max_depth, acc_var_ids
       super(vars_size * max_depth, nil)
@@ -16,24 +19,24 @@ module Magan
       (0...@vars_size).map do |i|
         e = self[i]
         if @acc_var_ids.include?(i)
-          e || []
+          e ? e.map!(&:value) : []
         else
           e ? e.value : nil
         end
       end
     end
 
-    def assign i, v
-      if v
-        self[i] = v # (NOTE the node - not nil)
-        v
+    def assign i, node
+      if node
+        self[i] = node
+        node
       end
     end
 
-    def acc i, v
-      if v
-        (self[i] ||= []) << v.value
-        v
+    def acc i, node
+      if node
+        (self[i] ||= []) << node
+        node
       end
     end
 
@@ -44,15 +47,11 @@ module Magan
         j = base + i
         if r and self[j]
           prev_j = j - @vars_size
-          if @acc_var_ids.include?(i)
+          if @acc_var_ids.include?(i) and self[prev_j]
             # acc
-            if self[prev_j]
-              self[prev_j].push *self[j]
-            else
-              self[prev_j] = self[j]
-            end
+            self[prev_j].push *self[j]
           else
-            # assign (NOTE the node - not nil)
+            # prev acc == nil or assign
             self[prev_j] = self[j]
           end
         end
