@@ -22,6 +22,10 @@ module Magan
         flat_map &:vars
       end
 
+      def max_capture_depth base
+        map{|e| e.max_capture_depth base}.max
+      end
+
       WRAP_OPEN  = "(\n"
       WRAP_CLOSE = ")\n"
       LAST_CLOSE = ")\n"

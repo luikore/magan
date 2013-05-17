@@ -22,6 +22,11 @@ module Magan
         flat_map &:vars
       end
 
+      def max_capture_depth base
+        base += 1
+        map{|e| e.max_capture_depth base}.max
+      end
+
       FIRST_OPEN = "(@src.try{\n"
       TRY_OPEN = "@src.try{\n"
       TRY_CLOSE = "} or\n"
@@ -35,12 +40,14 @@ module Magan
 
         first, *es, last = self
         first_vars = first.vars
+        rule = ct.current_rule
         if first_vars.empty?
           ct.add FIRST_OPEN
           ct.child first
           ct.add TRY_CLOSE
         else
-          ct.add "(captures.push_hash(#{Captures.init_add_values_s first_vars}).try(@src.try{\n"
+          rule.capture_depth += 1
+          ct.add "(captures.try(#{rule.capture_depth}, @src.try{\n"
           ct.child first
           ct.add "}) or\n"
         end
@@ -51,10 +58,13 @@ module Magan
             ct.child e
             ct.add TRY_CLOSE
           else
-            ct.add "captures.push_hash(#{Captures.init_add_values_s e_vars}).try(@src.try{\n"
+            ct.add "captures.try(#{rule.capture_depth}, @src.try{\n"
             ct.child e
             ct.add "}) or\n"
           end
+        end
+        if !first_vars.empty?
+          rule.capture_depth -= 1
         end
         ct.child last
         ct.add LAST_CLOSE

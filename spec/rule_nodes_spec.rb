@@ -47,22 +47,26 @@ module Magan; module RuleNodes
       ]
 
       @src = ZScan.new "baa"
-      captures = Captures.new
+      captures = Captures.new 1, 2, []
       assert_equal ['b', ['a', 'a']], eval(code)
 
       @src = ZScan.new "abb"
-      captures = Captures.new
+      captures = Captures.new 1, 2, []
       assert_equal ['a', 'bb'], eval(code)
     end
 
     it "parses rule" do
-      code = generate Rule['hello', Unit['x:', Re['hello'], nil], 'x.reverse', [['x', ':']]]
+      expr = Unit['x:', Re['hello'], nil]
+      code = generate Rule['hello', expr, 'x.reverse', 1, 1]
       @src = ZScan.new 'hello'
       assert_equal 'hello'.reverse, eval(code).value
     end
 
     def generate node
+      expr = Unit['x:', Re['hello'], nil]
+      rule_stub = Rule['hello', expr, nil, 1, 1]
       ct = CodeGenContext.new ''
+      ct.current_rule = rule_stub
       node.generate ct
       ct.join
     end
@@ -73,7 +77,7 @@ module Magan; module RuleNodes
     end
 
     # stub for exec
-    def exec_hello ast, x: nil
+    def exec_hello ast, (x)
       x.reverse
     end
   end

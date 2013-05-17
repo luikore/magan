@@ -54,6 +54,16 @@ module Magan
       '*' => 'zero_or_more',
       '+' => 'one_or_more'
 
+    module NoVar
+      def vars
+        []
+      end
+
+      def max_capture_depth base
+        base
+      end
+    end
+
     class Success
       def literal?
         true
@@ -63,9 +73,7 @@ module Magan
         ''
       end
 
-      def vars
-        []
-      end
+      include NoVar
 
       def generate ct
         "[]\n"
@@ -81,9 +89,7 @@ module Magan
         '(?:(?=\A)\A)'
       end
 
-      def vars
-        []
-      end
+      include NoVar
 
       def generate ct
         "nil\n"
@@ -99,9 +105,7 @@ module Magan
 
       alias to_re re
 
-      def vars
-        []
-      end
+      include NoVar
 
       def generate ct
         ct.add %Q|@src.scan(%r"#{re}")\n|
@@ -114,9 +118,7 @@ module Magan
         false
       end
 
-      def vars
-        []
-      end
+      include NoVar
 
       def generate ct
         ct.add "parse_#{id}()\n"
@@ -134,6 +136,11 @@ module Magan
         [var]
       end
 
+      def max_capture_depth base
+        # todo
+        base
+      end
+
       def generate ct
         # todo
       end
@@ -147,6 +154,11 @@ module Magan
 
       def vars
         args.flat_map &:vars
+      end
+
+      def max_capture_depth base
+        # todo
+        base
       end
 
       def generate ct
@@ -165,15 +177,50 @@ module Magan
     class DefinitionError < RuntimeError
     end
 
-    Rule = S.new :name, :expr, :block, :vars, :line_index, :block_line_index
+    Rule = S.new :name, :expr, :block, :line_index, :block_line_index
     class Rule
+      def self.[] *xs
+        new *xs
+      end
+
+      def initialize name, expr, block, line_index, block_line_index
+        super(name, expr, block, line_index, block_line_index)
+        @vars = expr.vars
+        @capture_depth = 0
+        @max_capture_depth = expr.max_capture_depth 1
+        @vars.uniq!
+        var_group = @vars.group_by{|v| v[/\w+/] }
+        ambig_var, _ = var_group.find do |_, vs|
+          vs.size > 1
+        end
+        if ambig_var
+          raise DefinitionError, "ambiguous var definition: #{ambig_var}, it should stick to one type"
+        end
+      end
+      attr_accessor :capture_depth
+
+      def compute_var_i var
+        @vars.size * @capture_depth + @vars.index(var)
+      end
+
+      def acc_var_ids
+        ids = []
+        @vars.each_with_index{|v, i|
+          if v.end_with?('::')
+            ids << i
+          end
+        }
+        ids
+      end
+
       def generate ct
-        if block or !vars.empty?
-          ct.add "captures = Captures.new #{Captures.init_add_values_s expr.vars}\n"
+        ct.current_rule = self
+        if block or !@vars.empty?
+          ct.add "captures = Captures.new #{@vars.size}, #{@max_capture_depth}, #{acc_var_ids}\n"
         end
 
         if block
-          ct.add "if ast = (\n"
+          ct.add "if ast = \n"
           ct.push_indent
         end
 
@@ -185,12 +232,11 @@ module Magan
 
         if block
           ct.pop_indent
-          ct.add ")\n"
             ct.push_indent
-            if vars.empty?
+            if @vars.empty?
               ct.add "ast.value = exec_#{name} ast\n"
             else
-              ct.add "ast.value = exec_#{name} ast, captures.first\n"
+              ct.add "ast.value = exec_#{name} ast, captures.get\n"
             end
             ct.add "ast\n"
             ct.pop_indent
@@ -210,8 +256,9 @@ module Magan
       def generate_exec ct
         return nil unless block
 
-        unless vars.empty?
-          vars_aref_list = vars.map{|var, ty| ", #{var}: #{ty == '::' ? '[]' : 'nil'}"}.join
+        unless @vars.empty?
+          vars_aref_list = @vars.map{|var| var[/\w+/] }.join ', '
+          vars_aref_list = ", (#{vars_aref_list})"
         end
         sig = "def exec_#{name} ast#{vars_aref_list}\n"
 

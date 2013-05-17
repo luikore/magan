@@ -8,6 +8,7 @@ module Magan
       super()
     end
     attr_reader :indent
+    attr_accessor :current_rule
 
     INDENT_INCR = '  '
     def push_indent

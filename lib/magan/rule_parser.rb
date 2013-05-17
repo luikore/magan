@@ -93,18 +93,7 @@ module Magan
         raise "redefinition of rule: #{id}"
       end
 
-      vars = expr.vars
-      vars.map!{|v| [v[/^\w+/], v[/:+$/]] }
-      vars.uniq!
-      var_group = vars.group_by(&:first)
-      ambig_var, _ = var_group.find do |_, vs|
-        vs.size > 1
-      end
-      if ambig_var
-        raise DefinitionError, "ambiguous var definition: #{ambig_var}, it should stick to one type"
-      end
-
-      rule = Rule[id, expr, block, vars, line_index, block_line_index]
+      rule = Rule[id, expr, block, line_index, block_line_index]
       rules[id] = rule
       rule
     end

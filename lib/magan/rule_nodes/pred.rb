@@ -18,6 +18,10 @@ module Magan
         atom.vars
       end
 
+      def max_capture_depth base
+        atom.max_capture_depth base
+      end
+
       BRACE_CLOSE = "}.tap{ @src.pop } && [])\n"
       PAREN_OPEN  = "(@src.push;(\n"
       PAREN_CLOSE = ").tap{ @src.pop } && [])\n"
