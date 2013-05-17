@@ -7,6 +7,8 @@ module Magan
   #
   # var_id used in assign / acc:
   #   depth * vars_size + var_id
+  #
+  # NOTE rewriting in C nearly no improvement in performance
   class Captures < Array
     def initialize vars_size, max_depth, acc_var_ids
       super(vars_size * max_depth, nil)
@@ -47,7 +49,7 @@ module Magan
         j = base + i
         if r and self[j]
           prev_j = j - @vars_size
-          if @acc_var_ids.include?(i) and self[prev_j]
+          if self[prev_j] and @acc_var_ids.include?(i)
             # acc
             self[prev_j].push *self[j]
           else
