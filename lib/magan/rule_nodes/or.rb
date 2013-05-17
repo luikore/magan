@@ -47,9 +47,9 @@ module Magan
           ct.add TRY_CLOSE
         else
           rule.capture_depth += 1
-          ct.add "(captures.try(#{rule.capture_depth}, @src.try{\n"
+          ct.add "(captures.try(#{rule.capture_depth}, @src.push._try(\n"
           ct.child first
-          ct.add "}) or\n"
+          ct.add ")) or\n"
         end
         es.each do |e|
           e_vars = e.vars
@@ -58,9 +58,9 @@ module Magan
             ct.child e
             ct.add TRY_CLOSE
           else
-            ct.add "captures.try(#{rule.capture_depth}, @src.try{\n"
+            ct.add "captures.try(#{rule.capture_depth}, @src.push._try(\n"
             ct.child e
-            ct.add "}) or\n"
+            ct.add ")) or\n"
           end
         end
         if !first_vars.empty?
