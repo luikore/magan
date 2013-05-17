@@ -43,8 +43,8 @@ module Magan
           zscan_method = QUANTIFIER_TO_ZSCAN[quantifier]
           atom_vars = atom.vars
           unless atom_vars.empty?
-            vars_try_beg = "captures.try(#{Captures.init_add_values_s atom_vars}){"
-            vars_try_end = '}'
+            vars_try_beg = "captures.push_hash(#{Captures.init_add_values_s atom_vars}).try("
+            vars_try_end = ')'
           end
           ct.add "#{assign}@src.#{zscan_method}(Node.new){#{vars_try_beg}\n"
           ct.child atom

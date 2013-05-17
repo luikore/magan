@@ -30,21 +30,23 @@ module Magan
       end
     end
 
-    def try init_hash={}
-      push init_hash
-      if r = yield
+    def push_hash hash={}
+      push hash
+      self
+    end
+
+    def try r
+      hash = pop
+      if r
         # merge values
-        pop
         l = last
-        init_hash.each do |k, v|
+        hash.each do |k, v|
           if v.is_a?(Array)
             l[k].push *v
           else
             l[k] = v
           end
         end
-      else
-        pop
       end
       r
     end
