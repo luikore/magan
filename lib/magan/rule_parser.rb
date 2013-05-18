@@ -36,15 +36,15 @@ module Magan
     COMMENT = /\#.*$/
 
     <<-RUBY
-    rules     = join[rule, \s* "\n" \s*]
+    rules     = rule (\s* "\n" \s* rule)*
     rule      = id _ '=' _ expr (_ block)?
-    expr      = join[seq, _ '/' _]
+    expr      = seq (_ '/' _ seq)*
     seq       = join[anchor / pred / unit, _]
-    pred      = pred_prefix _ atom (_ quantifier)?
+    pred      = pred_prefix unit
     unit      = var? _ atom _ quantifier?
     atom      = paren / helper / id / string / char_class / back_ref
     paren     = '(' _ expr _ ')'
-    expr_list = join[expr, _ "," _]
+    expr_list = expr (_ "," _ expr)*
     helper    = id '[' _ expr_list _ ']'
     RUBY
 
@@ -143,26 +143,36 @@ module Magan
     end
 
     def parse_pred
+      @src.push
       prefix = @src.scan PRED_PREFIX
-      if prefix
-        skip_space
-        atom = parse_atom
-        unless atom
-          return false
-        end
-        skip_space
-        case (quantifier = maybe{ @src.scan QUANTIFIER })
+      return false unless prefix
+      skip_space
+      unit = parse_unit
+      if unit
+        @src.drop
+      else
+        @src.pop
+        return false
+      end
+
+      if unit.respond_to?(:quantifier)
+        case unit.quantifier
         when /^[\?\*]/
           case prefix
           when '&', '<&'
-            Success[] # always match
+            return Success[] # always match
           else
-            Fail[] # always not match
+            return Fail[] # always not match
           end
-        else
-          Pred[prefix, atom, quantifier]
         end
       end
+
+      unless unit.literal?
+        if prefix.start_with?('<')
+          raise SyntaxError, "look-behind predicate not supported for non-literals: #{@src.pos}"
+        end
+      end
+      Pred[prefix, unit]
     end
 
     def parse_unit

@@ -19,19 +19,19 @@ module Magan; module RuleNodes
     end
 
     it "parses ref predicate" do
-      pred = generate Pred['&', Ref['a'], nil]
+      pred = generate Pred['&', Ref['a']]
       @src = ZScan.new 'a'
-      assert_equal [], eval(pred)
+      assert_equal '', eval(pred)
       @src = ZScan.new ''
       assert_equal nil, eval(pred)
     end
 
     it "parses literal predicate" do
-      pred = generate Pred['<&', Re['b'], nil]
+      pred = generate Pred['<&', Re['b']]
       @src = ZScan.new 'bc'
       assert_equal nil, eval(pred)
       @src.pos = 1
-      assert_equal [], eval(pred)
+      assert_equal '', eval(pred)
     end
 
     it "parses hybrid expr" do

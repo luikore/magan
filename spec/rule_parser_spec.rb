@@ -34,7 +34,7 @@ module Magan; module RuleNodes
     it "parses expr" do
       r = parse :expr, 'a / &"b" / c'
       assert_equal 3, r.size
-      assert_equal Pred['&', Re['b'], nil], r[1]
+      assert_equal Pred['&', Re['b']], r[1]
       assert_equal Ref['c'], r[2]
     end
 
